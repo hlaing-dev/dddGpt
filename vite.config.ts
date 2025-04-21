@@ -38,9 +38,9 @@ export default defineConfig({
     },
   },
   // produciton
-  base: 'https://fygv3j.rrgsih.cn/',
+  // base: 'https://fygv3j.rrgsih.cn/',
   // development
-  // base: '/',
+  base: '/',
   define: {
     global: {},
   },
