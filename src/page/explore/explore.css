@@ -1,0 +1,167 @@
+.scrollbar {
+  scrollbar-width: none;
+}
+
+.chinese_photo {
+  border-radius: 10px;
+  /* background: rgba(255, 255, 255, 0.12); */
+  /* background: #16131C; */
+}
+
+.more_btn {
+  display: flex;
+  /* width: 160px; */
+  justify-content: center;
+  align-items: flex-start;
+  gap: 10px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(
+    --Dark-Purple,
+    linear-gradient(
+      90deg,
+      rgba(255, 178, 224, 0.22) 0%,
+      rgba(205, 62, 255, 0.22) 100%
+    )
+  );
+}
+
+.rec_exp_more_btn {
+  border-radius: 6px;
+  background: linear-gradient(
+    93deg,
+    rgba(255, 255, 255, 0.12) 11.84%,
+    rgba(153, 153, 153, 0.12) 97.37%
+  );
+}
+
+.more_tabs_buttons_active {
+  border-radius: 100px;
+  background: var(
+    --Dark-Purple,
+    linear-gradient(
+      90deg,
+      rgba(255, 178, 224, 0.22) 0%,
+      rgba(205, 62, 255, 0.22) 100%
+    )
+  );
+}
+
+.more_tabs_buttons {
+  border-radius: 100px;
+  background: rgba(58, 58, 58, 0.2);
+}
+
+.explore_sec {
+  scrollbar-width: none;
+}
+
+.tip_comment {
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(16, 16, 16, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.custom-pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px; /* Adjust the spacing from the image */
+}
+
+.custom-pagination .swiper-pagination-bullet {
+  width: 6px;
+  height: 6px;
+  background-color: #888;
+  opacity: 1;
+  transition: background-color 0.3s;
+}
+
+.custom-pagination .swiper-pagination-bullet-active {
+  background-color: #fff;
+}
+
+.initial_popup_ad_box {
+  border-radius: 0px 8px 8px 8px;
+  border: 1px solid #747474;
+  background: #2d2d31;
+}
+
+.initial_popup_ad_box_notice {
+  border-radius: 25px;
+  border: 2px solid #7c7c7c;
+  background: rgba(22, 19, 28, 0.8);
+}
+.initial_popup_ad_box_notice_active {
+  width: 32px;
+  height: 3px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(
+    --Purple-Gradient-2,
+    linear-gradient(325deg, #cd3eff 43.64%, #ffb2e0 100%)
+  );
+}
+
+.initial_popup_ad_box_notice_title_box {
+  border-radius: 0px 12px 12px 0px;
+  background: rgba(255, 190, 158, 0.08);
+}
+
+.initial_popup_ad_box_notice_title_box_gg {
+  border-radius: 8px;
+  border-bottom: 1px solid #474747;
+}
+
+.initial_popup_ad_box_notice_title_box_gg_active {
+  border-radius: 8px;
+  background: var(
+    --Dark-Purple,
+    linear-gradient(
+      90deg,
+      rgba(255, 178, 224, 0.22) 0%,
+      rgba(205, 62, 255, 0.22) 100%
+    )
+  );
+}
+
+.initial_popup_ad_box_close {
+  border-radius: 1281.25px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* Hide scrollbar for WebKit browsers */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for Firefox */
+.scrollbar-hide {
+  scrollbar-width: none;
+}
+
+.image-container_exp {
+  position: relative;
+  border-radius: none !important;
+  /* background-image: url("../search/images/cardSkeleton.png"); */
+  /* background-size: cover;
+  background-position: center; */
+  overflow: hidden;
+  opacity: 1;
+  /* border-radius: 8.934px; */
+}
+
+.image-placeholder {
+  opacity: 0;
+  transition: opacity 0.1s ease-in-out;
+}
+
+.image-loaded {
+  opacity: 1;
+}
+
+.bg-search-img {
+  background: linear-gradient(151deg, #1d1a22 8.06%, #221d2b 95.37%);
+}
+

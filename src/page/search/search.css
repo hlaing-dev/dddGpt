@@ -1,0 +1,116 @@
+.search_input {
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.search_btn {
+  color: #eaacff;
+}
+
+.history_box {
+  color: var(--Neutral_6, #fff);
+
+  font-family: "Helvetica Neue";
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 120%; /* 16.8px */
+  letter-spacing: -0.28px;
+
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.dot {
+  width: 4px !important;
+}
+.like_count {
+  color: #fff;
+  font-variant-numeric: lining-nums proportional-nums;
+  font-feature-settings: "dlig" on;
+  text-shadow: 0px 3.2px 3.2px rgba(0, 0, 0, 0.25);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 24px; /* 200% */
+  letter-spacing: 0.12px;
+}
+
+.search_text {
+  color: #fff;
+  font-variant-numeric: lining-nums proportional-nums;
+  font-feature-settings: "dlig" on;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 21px; /* 175% */
+  letter-spacing: 0.12px;
+}
+
+.cross-circle {
+  display: flex;
+  width: 20px;
+  height: 20px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6.25px;
+  margin-top: 2px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  /* border-radius: 625px; */
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.image-container {
+  position: relative;
+
+  /* background-image: url("../search/images/cardSkeleton.png"); */
+  /* background-size: cover;
+  background-position: center; */
+  overflow: hidden;
+  opacity: 1;
+  border-radius: 8.934px;
+}
+
+.image-placeholder {
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.image-loaded {
+  opacity: 1;
+}
+
+.bg-search-img {
+  background: linear-gradient(151deg, #1d1a22 8.06%, #221d2b 95.37%);
+}
+
+.may_text {
+  color: rgba(255, 255, 255, 0.6);
+  font-family: "Source Han Sans CN";
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+}
+
+.bg-first-two {
+  color: #eaacff;
+  font-family: "Source Han Sans CN";
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  border-radius: 4px;
+  background: linear-gradient(
+    93deg,
+    rgba(206, 74, 251, 0.12) 1.58%,
+    rgba(206, 74, 251, 0.04) 20.59%
+  );
+}
+
+.chinese_photo1 {
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.12);
+}
