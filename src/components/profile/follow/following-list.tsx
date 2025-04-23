@@ -11,19 +11,24 @@ import { UsersRound } from "lucide-react";
 import FollowCard from "../follow-card";
 import InfinitLoad from "@/components/shared/infinit-load";
 
-const FollowingList = ({ searchTerm, id }: any) => {
+const FollowingList = ({ searchTerm, id, allowToFetch }: any) => {
   // const [searchTerm, setSearchTerm] = useState("");
   const [following, setFollowing] = useState<any>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [totalData, setTotalData] = useState<number>(0);
-  const user_code = useSelector((state: any) => state.persist?.user?.id);
+  const user = useSelector((state: any) => state?.persist?.user) || "";
 
-  const { data, isLoading, isFetching, refetch } = useGetFollowingListQuery({
-    user_id: id,
-    // search: searchTerm,
-    page: page,
-  });
+  const { data, isLoading, isFetching, refetch } = useGetFollowingListQuery(
+    {
+      user_id: id,
+      // search: searchTerm,
+      page: page,
+    },
+    {
+      skip: allowToFetch,
+    }
+  );
 
   const { data: filterdata } = useFilterFollowingQuery(
     {

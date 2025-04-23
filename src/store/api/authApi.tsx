@@ -26,6 +26,7 @@ export const authApi = createApi({
     },
     responseHandler: async (response) => {
       const encryptedData = await response.json();
+      console.log(encryptedData, "encryptedData");
       if (encryptedData?.status === false)
         localStorage.setItem("auth-error", encryptedData?.message);
       try {
@@ -42,7 +43,7 @@ export const authApi = createApi({
     getCaptcha: builder.mutation<any, string>({
       query: (arg: any) => convertToSecureUrl(`/captcha`),
     }),
-    register: builder.mutation<any, string>({
+    register: builder.mutation<any, any>({
       query: ({
         username,
         password,
@@ -61,7 +62,7 @@ export const authApi = createApi({
         }),
       }),
     }),
-    login: builder.mutation<any, string>({
+    login: builder.mutation<any, any>({
       query: ({ username, password, captcha, captcha_key }: any) => ({
         url: "/login",
         method: "POST",
