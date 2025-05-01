@@ -37,12 +37,12 @@ import Shield from "@/assets/profile/shield.png";
 import Portal from "./Portal";
 import AuthError from "@/components/shared/auth-error";
 
-const RegisterForm = ({ setIsOpen }: any) => {
+const RegisterForm = ({ setIsOpen, refer_code, geetest_id }: any) => {
   const [flashLoading, setflashLoading] = useState(false);
 
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(refer_code);
   const [show验证码, setShow验证码] = useState(false);
   const [showSecurity, setShowSecurity] = useState(false);
   const [captcha, setCaptcha] = useState("");
@@ -89,8 +89,10 @@ const RegisterForm = ({ setIsOpen }: any) => {
       password,
       captcha,
       captcha_key: data?.data?.captcha_key,
+      geetest_id: geetest_id,
       referral_code: code,
     });
+
     // console.log(registerData, "registerData");
     if (registerData?.status) {
       dispatch(setUser(registerData?.data));
@@ -158,7 +160,7 @@ const RegisterForm = ({ setIsOpen }: any) => {
           </p>
           <div
             onClick={() => {
-              // setIsOpen(false);
+              setIsOpen(false);
               dispatch(setIsDrawerOpen(false));
               dispatch(setAuthToggle(true));
             }}

@@ -30,6 +30,7 @@ const Transit: React.FC<TransitProps> = ({}) => {
       setStatus(config?.data?.transaction_status_list);
     }
   }, [data, config]);
+  console.log(status)
 
   // console.log(status)
   // const getStatusClass = (status: string) => {
@@ -65,8 +66,9 @@ const Transit: React.FC<TransitProps> = ({}) => {
       color: statusObj?.text_color_code || "#FFF", // Default white if not found
     };
   };
+  console.log(tran)
   return (
-    <div className=" py-[20px]">
+    <div className=" min-h-[50vh]">
       {/* header */}
       <div className="transit_header px-[20px] py-[10px] flex items-center justify-between">
         <h1 className=" text-white text-[16px] font-[500] leading-normal">
@@ -98,56 +100,54 @@ const Transit: React.FC<TransitProps> = ({}) => {
               </div>
             ) : (
               <>
-                {tran?.slice(0, 5).map((ts: any) => (
-                  // {tran?.map((ts: any) => (
-                  <div
-                    key={ts.id}
-                    className=" transit_list py-[20px] flex justify-between"
-                  >
-                    <div className=" flex gap-[12px] items-center">
-                      <div className="bitcoin_border w-[56px] h-[56px] flex justify-center items-center">
-                        <img
-                          className=" w-[26px] h-[26px]"
-                          src={transit}
-                          alt=""
-                        />
-                      </div>
-                      <div className=" flex flex-col gap-[4px]">
-                        <span className=" text-white text-[14px] font-[500] leading-[20px]">
-                          {ts.description}
-                        </span>
-                        <span className=" text-[#777] text-[12px] font-[400] leading-[20px]">
-                          {ts.date}
-                        </span>
-                      </div>
-                    </div>
-                    <div className=" flex flex-col justify-center items-center gap-[6px]">
-                      <span>
-                        {ts.dr_cr === "cr" ? "+" : "-"} {ts.amount}
-                      </span>
-                      {ts.status && (
-                        <div
-                          style={{
-                            backgroundColor: getStatusClass(ts.status)
-                              .backgroundColor,
-                            color: getStatusClass(ts.status).color,
-                          }}
-                          className="px-[12px] py-[6px] flex justify-center items-center rounded-[6px]  text-[12px] font-[400] leading-[15px]"
-                        >
-                          {/* <span className={getStatusClass(ts.status).text}> */}
-                          {/* {ts.status} */}
-                          {ts.status === "approved" && "已批准"}
-                          {ts.status === "pending" && "待处理"}
-                          {ts.status === "rejected" && "已拒绝"}
-                          {ts.status === "success" && "成功"}
-                          {ts.status === "failed" && "失败"}
-                          {ts.status === "default" && "默认"}
-                          {/* </span> */}
+                <div className=" flex flex-col gap-[8px]">
+                  {tran?.slice(0, 5).map((ts: any) => (
+                    // {tran?.map((ts: any) => (
+                    <div
+                      key={ts.id}
+                      className=" new_tran_box px-[12px] py-[20px] flex justify-between items-start"
+                    >
+                      <div className=" flex gap-[12px] items-center w-[70%]">
+                       
+                        <div className=" flex flex-col gap-[4px]">
+                          <span className="new_tran_box_title">{ts.title}</span>
+                          <span className="block text-[#aaa] text-[14px] font-[500] leading-[20px] w-[70%] break-words">
+                            {ts.description}
+                          </span>
+
+                          <span className=" text-[#777] text-[12px] font-[400] leading-[20px]">
+                            {ts.date}
+                          </span>
                         </div>
-                      )}
+                      </div>
+                      <div className=" flex flex-col justify-center items-center gap-[6px]">
+                        <span>
+                          {ts.state === "increase" ? "+" : "-"} {ts.amount}
+                        </span>
+                        {ts.status && (
+                          <div
+                            style={{
+                              backgroundColor: getStatusClass(ts.status)
+                                .backgroundColor,
+                              color: getStatusClass(ts.status).color,
+                            }}
+                            className="px-[12px] py-[6px] flex justify-center items-center rounded-[6px]  text-[12px] font-[400] leading-[15px]"
+                          >
+                            {/* <span className={getStatusClass(ts.status).text}> */}
+                            {/* {ts.status} */}
+                            {ts.status === "approved" && "已批准"}
+                            {ts.status === "pending" && "待处理"}
+                            {ts.status === "rejected" && "已拒绝"}
+                            {ts.status === "success" && "成功"}
+                            {ts.status === "failed" && "失败"}
+                            {ts.status === "default" && "默认"}
+                            {/* </span> */}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </>
             )}
           </>
