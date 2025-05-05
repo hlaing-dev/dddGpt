@@ -224,7 +224,7 @@ const RegisterForm = ({ setIsOpen, refer_code, geetest_id }: any) => {
                         <input
                           type={showPassword ? "text" : "password"}
                           className="block w-full  py-2 text-white bg-transparent bg-clip-padding transition ease-in-out m-0 focus:text-white focus:bg-transparent focus:outline-none "
-                          placeholder="密码必须是8-25个字符"
+                          placeholder="密码必须是6-25个字符"
                           {...field}
                           maxLength={25}
                         />
@@ -269,7 +269,7 @@ const RegisterForm = ({ setIsOpen, refer_code, geetest_id }: any) => {
                   isLoading ||
                   !emailOrPhoneValue ||
                   !passwordValue ||
-                  passwordValue?.length < 8 ||
+                  passwordValue?.length < 6 ||
                   passwordValue?.length > 25
                 }
                 onClick={async () => {
