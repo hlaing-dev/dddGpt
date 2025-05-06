@@ -117,24 +117,23 @@ const Luckydraw = () => {
       if (isIOSApp()) {
         sendEventToNative("copyAppdownloadUrl", contentUrl);
       } else {
-        const textArea = document.createElement('textarea');
-        textArea.value = contentUrl;
-        textArea.style.position = 'fixed';
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-
-        try {
-          const successful = document.execCommand('copy');
-          if (successful) {
-            dispatch(showToast({ message: "复制成功", type: "success" }));
-          }
-        } catch (err) {
-          console.error('Failed to copy text: ', err);
-        } finally {
-          document.body.removeChild(textArea);
-        }
+        setTimeout(() => {
+        navigator.clipboard.writeText(contentUrl).then(() => {
+          dispatch(
+            showToast({
+              message: "复制成功",
+              type: "success",
+            })
+          );
+        });
+      }, 100);
       }
+      dispatch(
+        showToast({
+          message: "复制成功",
+          type: "success",
+        })
+      );
     } catch (error) {
       console.error("Failed to fetch user share info:", error);
       dispatch(
