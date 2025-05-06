@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import "../wallet.css";
 import { ChevronRight, ScrollText } from "lucide-react";
 import transit from "../../../assets/wallet/transit.png";
@@ -66,7 +66,32 @@ const Transit: React.FC<TransitProps> = ({}) => {
       color: statusObj?.text_color_code || "#00FFC3", // Default white if not found
     };
   };
-  console.log(tran);
+  // console.log(tran);
+  const getStatusLabel = (status: string): string => {
+    const statusMap: Record<string, string> = {
+      approved: "已批准",
+      pending: "待处理",
+      rejected: "已拒绝",
+      success: "成功",
+      failed: "失败",
+    };
+
+    return statusMap[status] || status;
+  };
+
+  const labelMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const item of tran) {
+      const status = item.status;
+      if (!map[status]) {
+        map[status] = getStatusLabel(status);
+      }
+    }
+    return map;
+  }, [tran]);
+
+  console.log(labelMap);
+
   return (
     <div className=" min-h-[50vh]">
       {/* header */}
@@ -141,15 +166,8 @@ const Transit: React.FC<TransitProps> = ({}) => {
                             }}
                             className="px-[12px] py-[6px] flex justify-center items-center rounded-[6px]  text-[12px] font-[400] leading-[15px]"
                           >
-                            {/* <span className={getStatusClass(ts.status).text}> */}
-                            {/* {ts.status} */}
-                            {ts.status === "approved" && "已批准"}
-                            {ts.status === "pending" && "待处理"}
-                            {ts.status === "rejected" && "已拒绝"}
-                            {ts.status === "success" && "成功"}
-                            {ts.status === "failed" && "失败"}
-                            {ts.status === "default" && "默认"}
-                            {/* </span> */}
+                            {/* {getStatusLabel(ts.status)} */}
+                            {labelMap[ts.status]}
                           </div>
                         )}
                       </div>

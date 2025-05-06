@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Header from "../Header";
 import empty from "./empty.svg";
 import "../wallet.css";
@@ -42,6 +42,7 @@ const TranHist: React.FC = () => {
   const [status, setStatus] = useState([]);
   const { data: config } = useGetInviteQuery("");
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+  const [customLoad, setCustomLoad] = useState(false);
 
   const [filter, setFilter] = useState<any>({});
 
@@ -83,7 +84,7 @@ const TranHist: React.FC = () => {
     page: page,
   });
 
-  console.log(filter);
+  // console.log(filter);
 
   useEffect(() => {
     if (data?.data) {
@@ -113,11 +114,37 @@ const TranHist: React.FC = () => {
 
   const handleFilterChange = (key: string) => {
     setSelectedFilter(key);
+    setCustomLoad(true);
     setTran([]);
-    console.log(selectedFilter);
+    // console.log(selectedFilter);
     // Call API with the key (filter)
-    // fetchDataFromApi(key);
+    setTimeout(() => {
+      setCustomLoad(false);
+    }, 500);
   };
+
+  const getStatusLabel = (status: string): string => {
+    const statusMap: Record<string, string> = {
+      approved: "已批准",
+      pending: "待处理",
+      rejected: "已拒绝",
+      success: "成功",
+      failed: "失败",
+    };
+
+    return statusMap[status] || status;
+  };
+
+  const labelMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const item of tran) {
+      const status = item.status;
+      if (!map[status]) {
+        map[status] = getStatusLabel(status);
+      }
+    }
+    return map;
+  }, [tran]);
 
   return (
     <div className="flex justify-center items-center">
@@ -162,7 +189,7 @@ const TranHist: React.FC = () => {
 
         {/* transition */}
         <div className="py-[12px] px-[18px] mt-24">
-          {isLoading ? (
+          {isLoading || customLoad ? (
             <div className=" flex justify-center items-center py-[100px]">
               <div className="heart">
                 <img src={loader} className="w-[70px] h-[70px]" alt="加载中" />
@@ -237,13 +264,9 @@ const TranHist: React.FC = () => {
                               className="px-[12px] py-[6px] flex justify-center items-center rounded-[6px]  text-[12px] font-[400] leading-[15px]"
                             >
                               {/* <span className={getStatusClass(ts.status).text}> */}
-                              {/* {ts.status} */}
-                              {ts.status === "approved" && "已批准"}
-                              {ts.status === "pending" && "待处理"}
-                              {ts.status === "rejected" && "已拒绝"}
-                              {ts.status === "success" && "成功"}
-                              {ts.status === "failed" && "失败"}
-                              {ts.status === "default" && "默认"}
+
+                              {/* {getStatusLabel(ts.status)} */}
+                              {labelMap[ts.status]}
                               {/* </span> */}
                             </div>
                           )}
