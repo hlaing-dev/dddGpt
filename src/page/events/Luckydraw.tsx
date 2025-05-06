@@ -126,7 +126,7 @@ const Luckydraw = () => {
             })
           );
         });
-      }, 100);
+      }, 1000);
       }
       dispatch(
         showToast({
