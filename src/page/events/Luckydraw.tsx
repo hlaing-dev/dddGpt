@@ -118,7 +118,7 @@ const Luckydraw = () => {
         sendEventToNative("copyAppdownloadUrl", contentUrl);
       } else {
         setTimeout(() => {
-        navigator.clipboard.writeText(contentUrl).then(() => {
+        navigator.clipboard.writeText('神秘观影App，免费好用，低调分享，内容丰富，人手必备不会失望！下载地址：http://lb-gca28s7j-kzpulyd0oxbhq7at.clb.jkt-tencentclb.net/wx/jr27fv/Gl50X5').then(() => {
           dispatch(
             showToast({
               message: "复制成功",
