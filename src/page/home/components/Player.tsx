@@ -46,6 +46,7 @@ const Player = ({
   indexRef,
   videoData,
   setShowRotate,
+  video,
 }: {
   src: string;
   thumbnail: string;
@@ -62,6 +63,7 @@ const Player = ({
   abortControllerRef: any;
   indexRef: any;
   videoData: any;
+  video: any;
   setShowRotate: any;
 }) => {
   const playerContainerRef = useRef<HTMLDivElement | null>(null);
@@ -100,6 +102,128 @@ const Player = ({
   const watchTimerRef = useRef<NodeJS.Timeout | null>(null); // Reference to store the watch timer
 
   const dispatch = useDispatch();
+
+  const [thumbnailPreview, setThumbnailPreview] = useState({
+    visible: false,
+    position: { x: 0, y: 0 },
+    time: 0,
+  });
+
+  console.log(video);
+
+  const spriteImageUrlRef = useRef<string | null>(null);
+  const metadata = video?.sprite_metadata || {};
+
+  // Load and decrypt the sprite image
+  const loadAndDecryptSprite = async () => {
+    try {
+      const spriteUrl = video.sprite_url || "";
+      const xorKey = 0x12;
+      const encryptSize = 4096;
+
+      const response = await fetch(spriteUrl);
+
+      const base64Text = await response.text();
+
+      // XOR-decrypt the first N characters
+      const chars = base64Text.split("");
+      const max = Math.min(encryptSize, chars.length);
+      for (let i = 0; i < max; i++) {
+        const xorCharCode = chars[i].charCodeAt(0) ^ xorKey;
+        chars[i] = String.fromCharCode(xorCharCode);
+      }
+
+      const decryptedBase64 = chars.join("");
+
+      // Parse base64 into Blob
+      const [header, base64Data] = decryptedBase64.includes("base64,")
+        ? decryptedBase64.split(",")
+        : ["data:image/jpeg;base64", decryptedBase64];
+
+      const byteString = atob(base64Data);
+      const byteArray = new Uint8Array(byteString.length);
+      for (let i = 0; i < byteString.length; i++) {
+        byteArray[i] = byteString.charCodeAt(i);
+      }
+
+      const mimeType = header.match(/data:(.*);base64/)?.[1] || "image/jpeg";
+      const blob = new Blob([byteArray], { type: mimeType });
+
+      // Create object URL
+      const url = URL.createObjectURL(blob);
+
+      spriteImageUrlRef.current = url; // Update the ref
+    } catch (error) {
+      console.error("Error loading sprite:", error);
+    }
+  };
+
+  // Get sprite position for a given time
+  const getSpritePosition = (time: number) => {
+    const index = Math.floor(time / metadata.frameInterval);
+    if (index >= metadata.frameCount) return null;
+
+    const col = index % metadata.tileCols;
+    const row = Math.floor(index / metadata.tileCols);
+    const x = col * metadata.tileWidth;
+    const y = row * metadata.tileHeight;
+
+    return { x, y };
+  };
+
+  // Update thumbnail preview
+  const updateThumbnailPreview = (time: number, clientX: number) => {
+    if (!artPlayerInstanceRef.current || !spriteImageUrlRef.current) return;
+
+    const pos = getSpritePosition(time);
+    if (!pos) return;
+
+    setThumbnailPreview({
+      visible: true,
+      position: {
+        x: clientX - 80, // Center the preview under the cursor
+        y: -100, // Position above the progress bar
+      },
+      time,
+    });
+  };
+
+  // Add this useEffect near your other hooks
+  useEffect(() => {
+    if (!artPlayerInstanceRef.current) return;
+
+    // Find the preview element in the DOM
+    const previewElement = playerContainerRef.current?.querySelector(
+      ".thumbnail-preview"
+    ) as HTMLDivElement;
+    if (!previewElement || !spriteImageUrlRef.current) return;
+
+    if (thumbnailPreview.visible) {
+      const pos = getSpritePosition(thumbnailPreview.time);
+      if (pos) {
+        previewElement.style.display = "block";
+        // Calculate maximum left position to keep thumbnail within viewport
+        const thumbnailWidth = metadata.isPortrait ? 90 : 160;
+        const viewportWidth = window.innerWidth;
+        const maxLeft = viewportWidth - thumbnailWidth - 10; // 40px buffer from right edge
+
+        // Constrain the position
+        let leftPosition = thumbnailPreview.position.x + 20;
+        leftPosition = Math.max(10, Math.min(leftPosition, maxLeft)); // 10px minimum from left edge
+
+        previewElement.style.left = `${leftPosition}px`;
+        previewElement.style.bottom = "30px";
+        previewElement.style.backgroundImage = `url(${spriteImageUrlRef.current})`;
+        previewElement.style.backgroundPosition = `-${pos.x}px -${pos.y}px`;
+
+        previewElement.style.backgroundSize = `${
+          metadata.tileCols * metadata.tileWidth
+        }px ${metadata.tileRows * metadata.tileHeight}px`;
+      }
+    } else {
+      previewElement.style.display = "none";
+    }
+  }, [thumbnailPreview]);
 
   // Format time (e.g., 65 => "01:05")
   const formatTime = (time: number) => {
@@ -548,8 +672,6 @@ const Player = ({
 
             // Pre-warm the player before playback starts
             hls.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
-              console.log("Manifest loaded, pre-warming fragments");
-
               // Start loading but don't play yet
               hls.startLoad(-1);
 
@@ -629,7 +751,7 @@ const Player = ({
           html: `
             <div class="custom-progress-container">
               <input type="range" min="0" max="100" step="0.1" class="custom-progress-bar chrome-fix" />
-                <div class="custom-time-display" style="display: flex; justify-content: center; position: absolute; width: 100%; left: 0; text-align: center;"></div>
+                <div class="custom-time-display" style="display: none; justify-content: center; position: absolute; width: 100%; left: 0; text-align: center;"></div>
             </div>
           `,
           style: {
@@ -682,6 +804,7 @@ const Player = ({
 
             // Desktop events
             progressBarRef.current.addEventListener("input", (e) => {
+              setShowRotate(true);
               if (!artPlayerInstanceRef.current) return;
               if (!isDraggingRef.current) {
                 dispatch(sethideBar(true));
@@ -712,19 +835,39 @@ const Player = ({
                 `${value}%`
               );
 
+              // Update thumbnail preview
+              if (e instanceof MouseEvent) {
+                updateThumbnailPreview(seekTimeRef.current, e.clientX);
+              }
+
               if (timeDisplayRef.current) {
                 const currentTime = formatTime(seekTimeRef.current);
                 const duration = formatTime(
                   artPlayerInstanceRef.current.duration
                 );
-                timeDisplayRef.current.textContent = `${currentTime} / ${duration}`;
+
+                if (video?.sprite_url) {
+                  if (metadata?.isPortrait) {
+                    timeDisplayRef.current.style.bottom = `220px`;
+                  } else {
+                    timeDisplayRef.current.style.bottom = `150px`;
+                  }
+                } else {
+                  timeDisplayRef.current.style.bottom = `100px`;
+                }
+                timeDisplayRef.current.innerHTML = `<span style="border-radius: 100px;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 16px 20px;"><span style="color: #d53ff0;  
+"  >${currentTime}</span> / ${duration} </span>`;
               }
             });
 
             progressBarRef.current.addEventListener("change", () => {
+              setShowRotate(false);
               if (!artPlayerInstanceRef.current || !isDraggingRef.current)
                 return;
               isDraggingRef.current = false;
+              setThumbnailPreview((prev) => ({ ...prev, visible: false }));
               dispatch(sethideBar(false));
               if (progressBarRef.current) {
                 progressBarRef.current.style.height = "4px";
@@ -747,9 +890,11 @@ const Player = ({
 
             // Mobile touch events
             element.addEventListener("touchstart", (e) => {
+              setShowRotate(true);
               if (!artPlayerInstanceRef.current || !progressBarRef.current)
                 return;
               const touch = e.touches[0];
+
               const rect = element.getBoundingClientRect();
               const touchX = touch.clientX - rect.left;
               const percent = Math.min(
@@ -776,16 +921,31 @@ const Player = ({
               const newTime =
                 (percent / 100) * artPlayerInstanceRef.current.duration;
               seekTimeRef.current = newTime;
+              updateThumbnailPreview(newTime, touch.clientX);
               if (timeDisplayRef.current) {
                 const currentTime = formatTime(newTime);
                 const duration = formatTime(
                   artPlayerInstanceRef.current.duration
                 );
-                timeDisplayRef.current.textContent = `${currentTime} / ${duration}`;
+
+                if (video?.sprite_url) {
+                  if (metadata?.isPortrait) {
+                    timeDisplayRef.current.style.bottom = `220px`;
+                  } else {
+                    timeDisplayRef.current.style.bottom = `150px`;
+                  }
+                } else {
+                  timeDisplayRef.current.style.bottom = `100px`;
+                }
+                timeDisplayRef.current.innerHTML = `<span style="border-radius: 100px;
+                background: rgba(0, 0, 0, 0.5);
+                padding: 16px 20px;"><span style="color: #d53ff0;  
+              "  >${currentTime}</span> / ${duration} </span>`;
               }
             });
 
             element.addEventListener("touchmove", (e) => {
+              setShowRotate(true);
               if (
                 !artPlayerInstanceRef.current ||
                 !progressBarRef.current ||
@@ -794,6 +954,7 @@ const Player = ({
                 return;
               e.preventDefault();
               const touch = e.touches[0];
+              updateThumbnailPreview(seekTimeRef.current, touch.clientX);
               const rect = element.getBoundingClientRect();
               const touchX = touch.clientX - rect.left;
               const percent = Math.min(
@@ -803,7 +964,7 @@ const Player = ({
 
               // Make sure hideBar stays true during the entire touch drag operation
               dispatch(sethideBar(true));
-                
+
               progressBarRef.current.value = percent.toString();
               progressBarRef.current.style.setProperty(
                 "--progress",
@@ -817,11 +978,27 @@ const Player = ({
                 const duration = formatTime(
                   artPlayerInstanceRef.current.duration
                 );
-                timeDisplayRef.current.textContent = `${currentTime} / ${duration}`;
+
+                if (video?.sprite_url) {
+                  if (metadata?.isPortrait) {
+                    timeDisplayRef.current.style.bottom = `220px`;
+                  } else {
+                    timeDisplayRef.current.style.bottom = `150px`;
+                  }
+                } else {
+                  timeDisplayRef.current.style.bottom = `100px`;
+                }
+
+                // timeDisplayRef.current.textContent = `${currentTime} / ${duration}`;
+                timeDisplayRef.current.innerHTML = `<span style="border-radius: 100px;
+                background: rgba(0, 0, 0, 0.5);
+                padding: 16px 20px;"><span style="color: #d53ff0;  
+              "  >${currentTime}</span> / ${duration} </span>`;
               }
             });
 
             element.addEventListener("touchend", () => {
+              setShowRotate(false);
               if (
                 !artPlayerInstanceRef.current ||
                 !progressBarRef.current ||
@@ -830,6 +1007,7 @@ const Player = ({
                 return;
               isDraggingRef.current = false;
               dispatch(sethideBar(false));
+              setThumbnailPreview((prev) => ({ ...prev, visible: false }));
               progressBarRef.current.style.height = "4px";
               progressBarRef.current.style.setProperty("--thumb-width", "6px");
               progressBarRef.current.style.setProperty(
@@ -842,6 +1020,83 @@ const Player = ({
             });
           },
         },
+        {
+          html: `
+    <div class="thumbnail-preview" style="
+      position: absolute;
+      width: ${metadata.isPortrait ? "90px" : "160px"};
+      height: ${metadata.isPortrait ? "160px" : "90px"};
+      background-repeat: no-repeat;
+      background-size: auto;
+      border-radius: 4px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      pointer-events: none;
+      display:none;
+      z-index: 10000;
+    "></div>
+  `,
+          style: {
+            position: "absolute",
+            top: "0",
+            left: "0",
+            width: "100%",
+            height: "100%",
+            pointerEvents: "none",
+            zIndex: "9999",
+          },
+
+          mounted: (element: HTMLElement) => {
+            const previewElement = element.querySelector(
+              ".thumbnail-preview"
+            ) as HTMLDivElement;
+
+            // Create a function to update the preview
+            const updatePreview = () => {
+              if (!previewElement || !spriteImageUrlRef.current) return;
+
+              if (thumbnailPreview.visible) {
+                const pos = getSpritePosition(thumbnailPreview.time);
+                if (pos) {
+                  previewElement.style.display = "block";
+                  // Calculate maximum left position to keep thumbnail within viewport
+                  const thumbnailWidth = metadata.isPortrait ? 90 : 160;
+                  const viewportWidth = window.innerWidth;
+                  const maxLeft = viewportWidth - thumbnailWidth - 20; // 40px buffer from right edge
+
+                  // Constrain the position
+                  let leftPosition = thumbnailPreview.position.x + 20;
+                  leftPosition = Math.max(10, Math.min(leftPosition, maxLeft)); // 10px minimum from left edge
+
+                  previewElement.style.left = `${leftPosition}px`;
+                  previewElement.style.bottom = "30px";
+                  previewElement.style.backgroundImage = `url(${spriteImageUrlRef.current})`;
+                  previewElement.style.backgroundPosition = `-${pos.x}px -${pos.y}px`;
+                  previewElement.style.left = `${
+                    thumbnailPreview.position.x + 40
+                  }px`;
+
+                  previewElement.style.backgroundSize = `${
+                    metadata.tileCols * metadata.tileWidth
+                  }px ${metadata.tileRows * metadata.tileHeight}px`;
+                }
+              } else {
+                previewElement.style.display = "none";
+              }
+            };
+
+            // Initial update
+            updatePreview();
+
+            // Store the preview element reference
+            const previewRef = { current: previewElement };
+
+            // Return a cleanup function
+            return () => {
+              // previewRef?.current = null;
+            };
+          },
+        },
+
         {
           html: `<div class="custom-play-icon">
                     <img src="${indicator}" width="50" height="50" alt="Play">
@@ -1567,11 +1822,20 @@ const Player = ({
     });
   };
 
+  useEffect(() => {
+    if (!spriteImageUrlRef.current && video.sprite_url) {
+      loadAndDecryptSprite();
+    }
+  }, [video?.sprite_url]);
+
   // Handle active state changes
   useEffect(() => {
     if (!playerContainerRef.current) return;
 
     if (isActive) {
+      // if (!spriteImageUrlRef.current && video.sprite_url) {
+      //   loadAndDecryptSprite();
+      // }
       // Increment the index when a new video becomes active
       indexRef.current++;
 

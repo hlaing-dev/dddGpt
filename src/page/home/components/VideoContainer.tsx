@@ -1136,6 +1136,7 @@ const VideoContainer = ({
   return (
     <>
       <Player
+        video={video}
         videoData={videoData}
         indexRef={indexRef}
         abortControllerRef={abortControllerRef}

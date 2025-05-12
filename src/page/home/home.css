@@ -932,6 +932,7 @@ html {
 
 .custom-time-display {
   color: #fff;
+
   font-variant-numeric: lining-nums proportional-nums;
   font-feature-settings: "dlig" on;
   /* font-family: Inter; */
@@ -941,13 +942,12 @@ html {
   line-height: 20px;
   letter-spacing: 0.24px;
   position: absolute;
-  bottom: 80px;
-  right: 22%;
-  display: flex;
+  bottom: 100px;
+  right: 18%;
+  display: inline-flex;
   justify-content: center;
   color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
+
   pointer-events: none;
 }
 
