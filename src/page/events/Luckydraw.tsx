@@ -53,8 +53,7 @@ const Luckydraw = () => {
   const [firstLoad, setFirstLoad] = useState(true);
   const user = useSelector((state: any) => state.persist.user);
   const isOpen = useSelector((state: any) => state.profile.isDrawerOpen);
-  const [prizeDigit, setPrizeDigit] = useState<number[]>([0,0,0,0,0,0]);
-  const [isAnimating, setIsAnimating] = useState(false);
+
   const { data } = useGetUserShareInfoQuery({});
 
   // const {
@@ -98,6 +97,10 @@ const Luckydraw = () => {
     }
   }, [currentDuration, dispatch]);
 
+  if (!stats) {
+    return <Loader />;
+  }
+
   const getDetails = async () => {
     setFirstLoad(true);
     try {
@@ -110,44 +113,7 @@ const Luckydraw = () => {
       console.error("Failed to fetch event details:", error);
     }
   };
-  
-  // Animate counter from 0 to final value
-  useEffect(() => {
-    if (!stats?.remaining_amount) return;
-    
-    const maxLimit = parseInt(stats.remaining_amount);
-    if (isNaN(maxLimit)) return;
-
-    setIsAnimating(true);
-    
-    // Start from 0
-    setPrizeDigit([0, 0, 0, 0, 0, 0]);
-    
-    // Calculate how many steps to animate (use smaller number for smoother animation)
-    const animationSteps = Math.min(maxLimit, 50);
-    const stepValue = Math.max(1, Math.floor(maxLimit / animationSteps));
-    let currentValue = 0;
-    
-    const animationInterval = setInterval(() => {
-      currentValue = Math.min(currentValue + stepValue, maxLimit);
-      
-      // Convert to 6-digit array
-      const digits = currentValue.toString().padStart(6, '0').split('').map(Number);
-      setPrizeDigit(digits);
-      
-      if (currentValue >= maxLimit) {
-        clearInterval(animationInterval);
-        setIsAnimating(false);
-      }
-    }, 48); // Update every 50ms for smooth animation
-    
-    return () => clearInterval(animationInterval);
-  }, [stats?.remaining_amount]);
-
-  if (!stats) {
-    return <Loader />;
-  }
-
+  const remainPrizeDigits = stats?.remaining_amount?.padStart(5, "0").split("");
   // const time = timeFormatter.format(new Date(Number(currentDuration) || 0));
   const remainingTime = formatDateTime(currentDuration, timeZone);
 
@@ -247,11 +213,11 @@ const Luckydraw = () => {
             }}
           >
             <div className="flex justify-center mt-5 space-x-1">
-              {prizeDigit?.map((digit, index) => (
+              {remainPrizeDigits?.map((digit, index) => (
                 <FlipNumber
                   key={index}
-                  number={digit}
-                  firstLoad={isAnimating || firstLoad}
+                  number={parseInt(digit)}
+                  firstLoad={firstLoad}
                 />
               ))}
             </div>
