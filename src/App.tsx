@@ -7,7 +7,8 @@ import ErrorToast from "./page/home/services/ErrorToast";
 
 import { Toaster } from "./components/ui/toaster";
 import { useGetApplicationAdsQuery } from "./store/api/explore/exploreApi";
-import { initDeviceInfoListener, initDeviceInfo } from "./lib/deviceInfo";
+import { initDeviceInfoListener, initDeviceInfo, APP_VERSION } from "./lib/deviceInfo";
+import { useCheckAppVersionQuery } from "./store/api/versionApi";
 import guide from './assets/guide.webp';
 
 const App = () => {
@@ -18,6 +19,35 @@ const App = () => {
   const [isMobileBrowser, setIsMobileBrowser] = useState(false);
   const dispatch = useDispatch();
   const [showInAppBrowserAlert, setShowInAppBrowserAlert] = useState(false);
+  
+  // Convert version string to numeric format (e.g., 1.1.6.8 -> 1168)
+  const numericVersion = APP_VERSION ? APP_VERSION.split('.').join('') : '';
+  
+  // Check for app updates using RTK Query
+  const { data: versionData, isSuccess: versionCheckSuccess } = useCheckAppVersionQuery({
+    platform: 'ios',
+    version: numericVersion
+  }, {
+    // Skip if version is not available
+    skip: !numericVersion
+  });
+
+  const isWebClip = (): boolean => {
+    return (
+      "standalone" in window.navigator && window.navigator.standalone === true
+    );
+  };
+  // Handle version check result
+  useEffect(() => {
+    if (versionCheckSuccess && versionData) {
+      const needsUpdate = versionData?.data?.update_status;
+      if (needsUpdate) {
+        if(isWebClip()) {
+          window.location.reload();
+        }
+      }
+    }
+  }, [versionCheckSuccess, versionData]);
 
   useEffect(() => {
     // Function to check if the user is on a mobile browser
