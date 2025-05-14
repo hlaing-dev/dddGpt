@@ -1144,7 +1144,7 @@ const Latest: React.FC<LatestPorp> = ({
                         card?.files[0]?.width,
                         card?.files[0]?.height
                       )}
-                      className="object-cover h-full w-full rounded-none"
+                      className="object-contain h-full w-full rounded-none"
                       style={{
                         opacity:
                           activeLongPressCard?.post_id === card.post_id &&

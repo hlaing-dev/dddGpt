@@ -759,7 +759,7 @@ const More: React.FC<MoreProps> = () => {
                           item?.files[0]?.width,
                           item?.files[0]?.height
                         )}
-                        className="object-cover h-full w-full rounded-none"
+                        className="object-contain h-full w-full rounded-none"
                         style={{
                           opacity:
                             activeLongPressCard?.post_id === item.post_id &&
