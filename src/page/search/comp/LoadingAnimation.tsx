@@ -22,7 +22,7 @@ const LoadingAnimation = ({
     } else if (loadingVideoId === null && isAnimating) {
       // If condition becomes false, check if 1.5s has passed
       const elapsed = animationStartedAt ? Date.now() - animationStartedAt : 0;
-      const remainingTime = 1500 - elapsed;
+      const remainingTime = 800 - elapsed;
 
       if (remainingTime > 0) {
         // Keep animation running until 1.5s

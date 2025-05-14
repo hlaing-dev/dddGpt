@@ -531,7 +531,7 @@ const Results: React.FC<ResultsProps> = ({}) => {
           ...prev,
           [loadingVideoId]: true,
         }));
-      }, 1500);
+      }, 800);
 
       // Clear timer on unmount
       return () => {
