@@ -1048,7 +1048,7 @@ const Latest: React.FC<LatestPorp> = ({
 
     longPressTimer.current = setTimeout(() => {
       handleLongPress(card);
-    }, 100); // 500ms threshold for long press
+    }, 500); // 500ms threshold for long press
   };
 
   // Clean up all players when component unmounts
@@ -1144,7 +1144,7 @@ const Latest: React.FC<LatestPorp> = ({
                         card?.files[0]?.width,
                         card?.files[0]?.height
                       )}
-                      className="object-contain h-full w-full rounded-none"
+                      className="object-cover h-full w-full rounded-none"
                       style={{
                         opacity:
                           activeLongPressCard?.post_id === card.post_id &&

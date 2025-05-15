@@ -531,7 +531,7 @@ const Results: React.FC<ResultsProps> = ({}) => {
           ...prev,
           [loadingVideoId]: true,
         }));
-      }, 100);
+      }, 1500);
 
       // Clear timer on unmount
       return () => {
@@ -705,7 +705,7 @@ const Results: React.FC<ResultsProps> = ({}) => {
                                 card?.files[0]?.height
                               )
                             }
-                            className={`object-contain h-full w-full rounded-none`}
+                            className={`object-cover h-full w-full rounded-none`}
                             style={{
                               opacity:
                                 activeLongPressCard?.post_id === card.post_id &&

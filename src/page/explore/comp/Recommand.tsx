@@ -931,7 +931,7 @@ const Recommand: React.FC<RecommandProps> = ({
                                   card?.files[0]?.height
                                 )
                               }
-                              className=" object-contain h-full w-full rounded-none"
+                              className=" object-cover h-full w-full rounded-none"
                               style={{
                                 opacity:
                                   activeLongPressCard?.post_id + ll?.title ===
