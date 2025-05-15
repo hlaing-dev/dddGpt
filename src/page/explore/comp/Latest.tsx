@@ -1048,7 +1048,7 @@ const Latest: React.FC<LatestPorp> = ({
 
     longPressTimer.current = setTimeout(() => {
       handleLongPress(card);
-    }, 500); // 500ms threshold for long press
+    }, 100); // 500ms threshold for long press
   };
 
   // Clean up all players when component unmounts

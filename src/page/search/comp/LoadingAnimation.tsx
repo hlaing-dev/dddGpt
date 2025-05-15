@@ -15,14 +15,17 @@ const LoadingAnimation = ({
   useEffect(() => {
     let timeout: any;
 
-    if (loadingVideoId === postId && !isAnimating) {
+    if (loadingVideoId === postId) {
       // Start animation
       setIsAnimating(true);
       setAnimationStartedAt(Date.now());
-    } else if (loadingVideoId === null && isAnimating) {
+    } else if (loadingVideoId === null) {
+    //   setIsAnimating(false);
+    //   setAnimationStartedAt(null);
+    // }
       // If condition becomes false, check if 1.5s has passed
       const elapsed = animationStartedAt ? Date.now() - animationStartedAt : 0;
-      const remainingTime = 800 - elapsed;
+      const remainingTime = 500 - elapsed;
 
       if (remainingTime > 0) {
         // Keep animation running until 1.5s

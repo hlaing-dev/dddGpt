@@ -56,7 +56,7 @@ img {
   }
 }
 
-.loading-line-container {
+/* .loading-line-container {
   position: relative;
   overflow: hidden;
   width: 100%;
@@ -70,10 +70,9 @@ img {
   height: 100%;
   width: 100%;
   background-color: #cc3efe;
-  animation: loading-line 0.8s linear forwards; /* 'forwards' keeps final state */
-  /* transform: translateX(-100%); Start position */
-}
-/* 
+  animation: loading-line 0.5s linear infinite;
+} */
+
 @keyframes loading-line {
   0% {
     transform: translateX(-100%);
@@ -95,8 +94,8 @@ img {
   height: 2px;
   width: 100%;
   background-color: #cc3efe; 
-  animation: loading-line 1.5s linear infinite;
-} */
+  animation: loading-line 0.5s linear infinite;
+}
 
 @layer base {
   :root {
