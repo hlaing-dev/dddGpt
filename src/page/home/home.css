@@ -192,6 +192,15 @@ html {
   scrollbar-width: none; /* Firefox */
 }
 
+.videoFooter2 {
+  z-index: 99;
+
+  position: absolute;
+  color: white;
+  bottom: 30px;
+  display: flex;
+}
+
 .videoFooter {
   z-index: 99;
 
@@ -810,9 +819,7 @@ html {
 .spon {
   border-radius: 4px;
   background: rgba(255, 255, 255, 0.16);
-  color: #aaa;
-  leading-trim: both;
-  text-edge: cap;
+  color: #fff;
   font-family: ABeeZee;
   font-size: 12px;
   font-style: normal;
@@ -822,14 +829,22 @@ html {
 }
 
 .ads-btn {
-  border-radius: 8px;
+  border-radius: 12px;
   background: linear-gradient(325deg, #cd3eff 43.64%, #ffb2e0 100%);
+  color: #fff;
+  font-family: "Helvetica Neue";
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 16px; /* 88.889% */
+  letter-spacing: 0.3px;
+  /* 
   color: white;
   font-family: ABeeZee;
   font-size: 16px;
   font-style: normal;
   font-weight: 400;
-  line-height: normal;
+  line-height: normal; */
 }
 
 .ads-btn1 {
