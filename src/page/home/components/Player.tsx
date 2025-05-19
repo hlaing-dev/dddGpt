@@ -264,13 +264,11 @@ const Player = ({
 
         previewElement.style.left = `${leftPosition}px`;
         previewElement.style.bottom = "100px";
-        previewElement.style.border = "3px solid rgba(221, 221, 221, 0.00);";
+
         if (isSpriteLoading || !video?.sprite_url) {
           previewElement.style.backgroundImage = `url(${sprite_loading})`;
-          previewElement.style.backgroundColor = "#D9D9D9"; // or lightgray
         } else {
           previewElement.style.backgroundImage = `url(${spriteImageUrlRef.current})`;
-          previewElement.style.backgroundColor = "#D9D9D9"; // or lightgray
         }
 
         // Calculate the correct scale factor to fit the sprite in our thumbnail
@@ -1127,20 +1125,31 @@ const Player = ({
         },
         {
           html: `
-    <div class="thumbnail-preview" style="
-      position: absolute;
-      width: ${metadata.isPortrait ? "90px" : "160px"};
-      height: ${metadata.isPortrait ? "160px" : "90px"};
-      background-repeat: no-repeat;
-      background-size: cover;
-      border-radius: 4px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-      pointer-events: none;
- 
-      display:none;
-      z-index: 10000;
-    "></div>
-  `,
+<div class="thumbnail-preview" style="
+    position: absolute;
+    width: ${metadata.isPortrait ? "90px" : "160px"};
+    height: ${metadata.isPortrait ? "160px" : "90px"};
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-origin: border-box;
+    pointer-events: none;
+    z-index: 10000;
+    
+    /* Gradient border */
+    border: 4px solid transparent;
+    border-image: linear-gradient(to bottom, #D9D9D9 0%, #000000 100%) 1;
+    border-image-slice: 1;
+    
+    /* Simulate border-radius with masking */
+    border-radius: 4px;
+    -webkit-mask: 
+        linear-gradient(#fff, #fff) content-box, 
+        linear-gradient(#fff, #fff);
+    padding: 4px;
+    box-sizing: border-box;
+"></div>
+
+          `,
           style: {
             position: "absolute",
             top: "0",
@@ -1172,16 +1181,15 @@ const Player = ({
                   // Constrain the position
                   let leftPosition = thumbnailPreview.position.x + 20;
                   leftPosition = Math.max(10, Math.min(leftPosition, maxLeft)); // 10px minimum from left edge
-                  previewElement.style.border =
-                    "3px solid rgba(221, 221, 221, 0.00);";
+
+                  // Apply styling - ensure we don't override the CSS class
                   previewElement.style.left = `${leftPosition}px`;
                   previewElement.style.bottom = "100px";
+
                   if (isSpriteLoading && video?.sprite_url) {
                     previewElement.style.backgroundImage = `url(${sprite_loading})`;
-                    previewElement.style.backgroundColor = "#D9D9D9"; // or lightgray
                   } else {
                     previewElement.style.backgroundImage = `url(${spriteImageUrlRef.current})`;
-                    previewElement.style.backgroundColor = "#D9D9D9"; // or lightgray
                   }
 
                   // Calculate the correct scale factor to fit the sprite in our thumbnail
