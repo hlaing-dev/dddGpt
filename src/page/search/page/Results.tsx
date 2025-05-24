@@ -697,15 +697,7 @@ const Results: React.FC<ResultsProps> = ({}) => {
                           <ImageWithPlaceholder
                             src={card?.preview_image}
                             alt={card.title || "Video"}
-                            width={"100%"}
-                            height={
-                              card?.files[0]?.height &&
-                              calculateHeight(
-                                card?.files[0]?.width,
-                                card?.files[0]?.height
-                              )
-                            }
-                            className={`object-contain h-full w-full rounded-none`}
+                            className={`object-cover h-full w-full rounded-none`}
                             style={{
                               opacity:
                                 activeLongPressCard?.post_id === card.post_id &&
@@ -738,7 +730,7 @@ const Results: React.FC<ResultsProps> = ({}) => {
                                 card?.files[0]?.height
                               )
                             }
-                            className={`object-contain h-full w-full rounded-none ${
+                            className={`object-cover h-full w-full rounded-none ${
                               videoReadyStates[card.post_id]
                                 ? "hidden"
                                 : "block"
@@ -1622,7 +1614,7 @@ export default Results;
 //                                 card?.files[0]?.height
 //                               )
 //                             }
-//                             className="object-contain h-full w-full rounded-none"
+//                             className="object-cover h-full w-full rounded-none"
 //                           />
 //                         )} */}
 
@@ -1657,7 +1649,7 @@ export default Results;
 //                               card?.files[0]?.height
 //                             )
 //                           }
-//                           className="object-contain h-full w-full rounded-none"
+//                           className="object-cover h-full w-full rounded-none"
 //                           style={{
 //                             opacity:
 //                               activeLongPressCard?.post_id === card.post_id

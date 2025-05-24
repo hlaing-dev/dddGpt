@@ -269,8 +269,9 @@ const VideoCard = ({ videoData, loadingVideoId, setLoadingVideoId }: any) => {
     //   </div>
     // </div>
     <div
-     //h-[320px] remove
-    className="chinese_photo  max-w-full relative pt-[20px]">
+      //h-[320px] remove
+      className="chinese_photo  max-w-full relative pt-[20px]"
+    >
       <div className="w-full h-[2px] relative">
         <LoadingAnimation
           loadingVideoId={loadingVideoId}
@@ -307,12 +308,7 @@ const VideoCard = ({ videoData, loadingVideoId, setLoadingVideoId }: any) => {
         <ImageWithPlaceholder
           src={videoData?.preview_image}
           alt={videoData.title || "Video"}
-          width={"100%"}
-          height={calculateHeight(
-            videoData?.files[0]?.width,
-            videoData?.files[0]?.height
-          )}
-          className="object-contain h-full w-full rounded-none"
+          className="object-cover h-full w-full rounded-none"
           style={{
             opacity:
               activeLongPressCard?.post_id === videoData.post_id &&
@@ -333,7 +329,7 @@ const VideoCard = ({ videoData, loadingVideoId, setLoadingVideoId }: any) => {
             videoData?.files[0]?.width,
             videoData?.files[0]?.height
           )}
-          className=" object-contain h-full w-full rounded-none"
+          className=" object-cover h-full w-full rounded-none"
         /> */}
       <div className="relative">
         <div className="absolute card_style_2 bottom-0 flex justify-between items-center h-[50px] px-3 w-full">
