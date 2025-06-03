@@ -15,7 +15,7 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: "/index.html",
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MB
       },
       devOptions: {
         enabled: true
@@ -27,7 +27,7 @@ export default defineConfig({
       filename: 'sw.js',
       base: '/',
       injectManifest: {
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MB
       }
     }),
     react(),
@@ -38,7 +38,7 @@ export default defineConfig({
     },
   },
   // produciton
-  // base: 'https://fygv3j.rrgsih.cn/',
+  // base: 'https://viu34fdq.rrgsih.cn/',
   // development
   base: '/',
   define: {
