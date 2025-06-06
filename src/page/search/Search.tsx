@@ -463,14 +463,16 @@ const Search: React.FC<SearchProps> = ({}) => {
             </li>
           )}
         </ul>
-      ) : (
-        <div className="overflow-y-scroll h-screen">
-          <Hot />
-          <History />
-          <May />
-        </div>
-      )}
+      )
+      :
+      <div className="overflow-y-scroll h-screen">
+        <History />
+        <Hot />
+        <May />
+      </div>
+      }
       {/* initial */}
+      
     </div>
   );
 };

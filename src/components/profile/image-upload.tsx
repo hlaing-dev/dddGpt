@@ -1,6 +1,20 @@
-import { showToast } from "@/page/home/services/errorSlice";
+import {
+  useProfileUploadMutation,
+  useSettingUploadMutation,
+} from "@/store/api/profileApi";
+import { Camera } from "lucide-react";
+
 import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import Loader from "../shared/loader";
+import TranLoader from "../shared/tran-loader";
+import AsyncDecryptedImage from "@/utils/asyncDecryptedImage";
+
+// interface ImageUploadProps {
+//   imgurl: string;
+//   reviewStatus: any;
+//   setIsOpen: (isOpen: boolean) => void;
+//   refetchHandler: () => void;
+// }
 
 const ImageUpload = ({
   imgurl,
@@ -11,34 +25,18 @@ const ImageUpload = ({
   settingUploadData,
   profileUpload,
   refetch,
-  imageLimit,
 }: any) => {
   const [image, setImage] = useState<string | null>(null);
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [msg, setMsg] = useState(false);
-  const dispatch = useDispatch();
+  // const [settingUpload, { data: settingUploadData, isLoading: loading1 }] =
+  //   useSettingUploadMutation();
+
+  // const [profileUpload, { data: profileUploadData, isLoading: loading2 }] =
+  //   useProfileUploadMutation();
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // setIsOpen(false);
-    setError(null); // Reset error state
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-
-      // Validate file size (2MB limit)
-      if (file.size > imageLimit * 1024 * 1024) {
-        // setError("文件大小超过2MB限制");
-        setMsg(true);
-        // dispatch(
-        //   showToast({
-        //     message: "文件大小超过2MB限制",
-        //     type: "error",
-        //   })
-        // );
-        return;
-      }
-
-      handleFile(file);
-    }
+    setIsOpen(false);
+    if (e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
   };
 
   const handleFile = async (file: File) => {
@@ -50,8 +48,8 @@ const ImageUpload = ({
       // Convert to base64 only for API submission
       const base64 = await fileToBase64(file);
       setImage(url); // Use the blob URL for display
+      // setIsOpen(false);
       await settingUpload({ filedata: base64, filePath: "profile" });
-      setIsOpen(false);
     } catch (error) {
       console.error("Error handling file:", error);
     }
@@ -74,8 +72,10 @@ const ImageUpload = ({
   };
 
   useEffect(() => {
+    // setIsOpen(false);
     if (settingUploadData?.status)
       profileUpload({ file_url: settingUploadData?.data?.url });
+    // refetchHandler();
   }, [settingUploadData]);
 
   // Cleanup blob URLs when component unmounts
@@ -99,19 +99,11 @@ const ImageUpload = ({
                     reviewStatus === "pending" ? "text-[#888]" : "text-white"
                   } `}
                 >
-                  上传头像 (需审核)
+                  上传图片
                 </h1>
-                <p className="text-[14px] text-[#888888]">
-                  上传 PNG/JPG，限{imageLimit}MB
-                  {/* 上传 PNG/JPG，限{imageLimit}MB */}
+                <p className="text-[12px] text-[#888888]">
+                  上传 PNG/JPG，限1MB
                 </p>
-                {msg ? (
-                  <p className="text-[12px] text-[#F54C4F] mt-1">
-                    您的图片未通过审核，请重新上传合适的图片
-                  </p>
-                ) : (
-                  <></>
-                )}
               </div>
               {reviewStatus === "pending" ? (
                 <button className="text-[#E79AFE] bg-[#E79AFE14] text-[14px] px-2 py-1 rounded-[4px]">
@@ -122,14 +114,54 @@ const ImageUpload = ({
               )}
             </div>
           </label>
+          {/* {image ? (
+            <label htmlFor="image-upload" className="">
+              <div className="flex justify-center items-center relative">
+                <AsyncDecryptedImage
+                  imageUrl={image || "/placeholder.svg"}
+                  alt="Preview"
+                  className="w-[80px] h-[80px] rounded-full bg-[#FFFFFF12] flex justify-center items-center object-cover object-center filter saturate-50 brightness-75"
+                />
+                <div className="absolute">
+                  <Camera />
+                </div>
+              </div>
+            </label>
+          ) : (
+            <></>
+          )} */}
           <input
             type="file"
             accept="image/*"
             onChange={handleFileChange}
             className="hidden"
-            id={reviewStatus === "pending" ? "" : "image-upload"}
-            // id="image-upload"
+            id="image-upload"
           />
+          {/* {!image && !imgurl?.length ? (
+            <label htmlFor="image-upload" className="">
+              <div className="w-[80px] h-[80px] rounded-full bg-[#FFFFFF12] flex justify-center items-center mx-auto">
+                <Camera />
+              </div>
+            </label>
+          ) : (
+            <></>
+          )}
+          {!image && imgurl?.length ? (
+            <label htmlFor="image-upload" className="">
+              <div className="flex justify-center items-center relative">
+                <img
+                  src={imgurl}
+                  alt="Preview"
+                  className="w-[80px] h-[80px] rounded-full bg-[#FFFFFF12] flex justify-center items-center object-cover object-center filter saturate-50 brightness-75"
+                />
+                <div className="absolute">
+                  <Camera />
+                </div>
+              </div>
+            </label>
+          ) : (
+            <></>
+          )} */}
         </div>
       </div>
     </>

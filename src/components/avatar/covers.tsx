@@ -6,9 +6,8 @@ import ImageWithPlaceholder from "@/page/explore/comp/imgPlaceHolder";
 import { useCoverUploadMutation } from "@/store/api/profileApi";
 import TranLoader from "../shared/tran-loader";
 import { MdLock } from "react-icons/md";
-import ImageWithPlaceholder1 from "@/page/explore/comp/ImgPlaceHolder1";
 
-const Covers = ({ setShowCovers, refetch }: any) => {
+const Covers = ({ setShowCovers }: any) => {
   const [selectedCovers, setSelectedCovers] = useState<any>({});
   const [activeId, setActiveId] = useState("");
   const { data } = useGetCoverListQuery("");
@@ -17,12 +16,11 @@ const Covers = ({ setShowCovers, refetch }: any) => {
   const uploadHandler = async () => {
     const { data } = await coverUpload({ id: activeId });
     if (data?.status) setShowCovers(false);
-    refetch();
   };
   useEffect(() => {
     if (data) setSelectedCovers(data?.data[0]);
   }, [data]);
-  console.log(data);
+
   return (
     <div className="bg-[#000000CC] w-full flex justify-center items-center h-screen fixed top-0 left-0 z-[9999]">
       {isLoading ? <TranLoader /> : <></>}
@@ -32,11 +30,11 @@ const Covers = ({ setShowCovers, refetch }: any) => {
           <TopBar setShowCovers={setShowCovers} />
         </div>
         <div className="flex-1 overflow-hidden overflow-y-scroll hide-sb">
-          <div className="sticky top-0 z-50 flex gap-5 px-4 whitespace-nowrap overflow-x-auto hide-sb bg-[#16131C]">
+          <div className="sticky top-0 z-50 flex whitespace-nowrap overflow-x-auto hide-sb bg-[#16131C]">
             {data?.data?.map((item: any, index: any) => (
               <div
                 key={index}
-                className="flex flex-col items-center justify-center gap-3"
+                className="w-[72px] flex flex-col items-center justify-center gap-3"
                 onClick={() => setSelectedCovers(item)}
               >
                 <div className="w-[72px] h-[3px] bg-transparent"></div>
@@ -47,17 +45,16 @@ const Covers = ({ setShowCovers, refetch }: any) => {
                       : "text-[#888888]"
                   }`}
                 >
-                  {item?.level}
+                  Lvl-{index + 1}
                 </h1>
                 <div
-                  className={`w-[32px] h-[3px] ${
+                  className={`w-[72px] h-[3px] ${
                     selectedCovers == item ? "bg-[#CD3EFF]" : "bg-transparent"
                   }`}
                 ></div>
               </div>
             ))}
           </div>
-          <div className="bg-[#FFFFFF1F] h-[0.5px] w-full"></div>
           <div className="space-y-5 py-5 px-3">
             {selectedCovers?.list?.map((cover: any) => (
               <div
@@ -73,7 +70,7 @@ const Covers = ({ setShowCovers, refetch }: any) => {
                 } overflow-hidden`}
                 key={cover?.image}
               >
-                <ImageWithPlaceholder1
+                <ImageWithPlaceholder
                   src={cover?.image}
                   width={""}
                   height={""}
@@ -116,7 +113,7 @@ const TopBar = ({ setShowCovers }: any) => {
     <div className="flex justify-between items-center p-5">
       <div className=""></div>
       <div className="">
-        <p className="text-[18px]">等级专属背景</p>
+        <p className="text-[18px]">选择背景</p>
       </div>
       <div className="">
         <button

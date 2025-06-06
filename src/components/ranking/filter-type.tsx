@@ -40,7 +40,7 @@ const FilterType = ({
         {selectedType?.range?.map((range: any) => (
           <button
             onClick={() => setSelectedRange(range)}
-            className={`text-[14px] ${
+            className={`text-[12px] ${
               selectedRange == range
                 ? "text-white bg-[#FFFFFF1F]"
                 : "text-[#999] bg-[#FFFFFF05]"

@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
 import "../page/explore/explore.css";
-import logo from "../assets/alertlogo.webp";
+import logo from "../assets/alertlogo.jpeg";
 import closeIcon from "../assets/close.png";
 import { useDispatch } from "react-redux";
 import { setPlay } from "@/page/home/services/playSlice";
-import guide from '../assets/guide.webp';
+
 const imageToBlob = (url: string, callback: (blobUrl: string) => void) => {
   fetch(url)
     .then((response) => response.blob())
@@ -17,35 +17,15 @@ const imageToBlob = (url: string, callback: (blobUrl: string) => void) => {
 
 // Function to detect if the app is being used as a web clip
 const isWebClip = (): boolean => {
-  return (
-    "standalone" in window.navigator && window.navigator.standalone === true
-  );
-};
-
-// Function to detect in-app browsers
-const detectInAppBrowser = () => {
-  const ua = navigator.userAgent.toLowerCase();
-  return {
-    inWeChat: ua.indexOf('micromessenger') !== -1,
-    inAlipay: ua.indexOf('alipayclient') !== -1,
-    inWeibo: ua.indexOf('weibo') !== -1,
-    inQQ: ua.indexOf('qq/') !== -1,
-    inDouyin: ua.includes('douyin'),
-    inToutiao: ua.includes('newsarticle')
-  };
+  return 'standalone' in window.navigator && window.navigator.standalone === true;
 };
 
 interface AlertRedirectProps {
   setShowAlert: (show: boolean) => void;
   app_download_link: string;
-  event?: boolean | false;
 }
 
-const AlertRedirect: React.FC<AlertRedirectProps> = ({
-  setShowAlert,
-  app_download_link,
-  event,
-}) => {
+const AlertRedirect: React.FC<AlertRedirectProps> = ({ setShowAlert, app_download_link }) => {
   // State to track the platform and show/hide the alert section for Android
   // const [isAndroid, setIsAndroid] = useState(false);
   // const [isVisible, setIsVisible] = useState(false); // Track visibility
@@ -56,11 +36,10 @@ const AlertRedirect: React.FC<AlertRedirectProps> = ({
   const alertRef = useRef(null);
 
   const [logoBlobUrl, setLogoBlobUrl] = useState<string | null>(null);
-  const [showInAppBrowserAlert, setShowInAppBrowserAlert] = useState(false);
 
   useEffect(() => {
     imageToBlob(logo, (blobUrl) => setLogoBlobUrl(blobUrl));
-
+    
     // Cleanup function to revoke blob URL when component unmounts
     return () => {
       if (logoBlobUrl) {
@@ -83,24 +62,14 @@ const AlertRedirect: React.FC<AlertRedirectProps> = ({
   //   }
   // };
 
-  const handleDownloadClick = (e: React.MouseEvent) => {
-    const browserInfo = detectInAppBrowser();
-    if (browserInfo.inWeChat || browserInfo.inAlipay || browserInfo.inWeibo || browserInfo.inQQ) {
-      e.preventDefault();
-      setShowInAppBrowserAlert(true);
-    } else {
-      window.open(app_download_link, '_blank');
-    }
-  };
-
   const onBrowserClick = () => {
     setShowAlert(false);
-    if (!event) dispatch(setPlay(true));
+    dispatch(setPlay(true));
   };
 
   const onCloseClick = () => {
     setShowAlert(false);
-    if (!event) dispatch(setPlay(true));
+    dispatch(setPlay(true));
   };
 
   // useEffect(() => {
@@ -131,7 +100,10 @@ const AlertRedirect: React.FC<AlertRedirectProps> = ({
         {isWebClip() ? (
           <div className="flex justify-between items-center">
             <h1 className="alert-head-title">苹果商店版已上线，建议立刻安装</h1>
-            <button onClick={onCloseClick} className="text-white">
+            <button 
+              onClick={onCloseClick} 
+              className="text-white"
+            >
               <img src={closeIcon} alt="Close" width="16" height="16" />
             </button>
           </div>
@@ -141,11 +113,7 @@ const AlertRedirect: React.FC<AlertRedirectProps> = ({
         <div className="flex flex-col mt-8 gap-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img
-                src={logo}
-                alt=""
-                className="w-[50px] h-[50px]"
-              />
+              <img src={logoBlobUrl || logo} alt="" className="w-[50px] h-[50px]" />
               <div>
                 <h1 className="alert-body-title">笔盒APP</h1>
                 <p className="alert-body-text">更多原创精品内容尽在笔盒</p>
@@ -156,27 +124,11 @@ const AlertRedirect: React.FC<AlertRedirectProps> = ({
                 href={app_download_link}
                 target="_blank"
                 className="alert-body-btn"
-                onClick={handleDownloadClick}
               >
                 {isWebClip() ? "前往安装" : "打开"}
               </a>
             </div>
           </div>
-          {showInAppBrowserAlert && (
-            <div className="fixed w-full h-screen bg-white z-[3000] top-0 left-0">
-            <div className="w-full z-[1300] absolute h-full flex justify-center items-center">
-              <div className="text-[14px] bg-white rounded-lg text-center relative max-w-md w-full">
-                <div className="relative w-full">
-                  <img
-                    src={guide}
-                    alt=""
-                    className="w-full h-dvh object-contain"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-          )}
           {/* Only show browser option if not used as a web clip */}
           {!isWebClip() && (
             <div className="flex items-center justify-between">

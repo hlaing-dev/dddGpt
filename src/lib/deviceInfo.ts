@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import FingerprintJS from '@fingerprintjs/fingerprintjs';
 // Device information service for webview integration
 
 /**
@@ -10,11 +8,10 @@ interface DeviceInfo {
   uuid: string;
   osVersion: string;
   appVersion: string;
-  [key: string]: any; // Allow additional properties for fingerprinting data
 }
 
 // Application version - single source of truth
-export const APP_VERSION = '1.1.8.8';
+const APP_VERSION = '1.1.4.8';
 
 /**
  * Generate a UUID v4
@@ -72,12 +69,51 @@ const getPersistentUUIDFromIndexedDB = async (): Promise<string> => {
     };
     
     request.onerror = () => {
-      console.warn('Could not open IndexedDB');
-      // Generate temporary UUID if IndexedDB fails
-      const uuid = generateUUID();
+      console.warn('Could not open IndexedDB, falling back to localStorage');
+      // Fallback to localStorage
+      let uuid = localStorage.getItem(storageKey);
+      
+      if (!uuid) {
+        uuid = generateUUID();
+        try {
+          localStorage.setItem(storageKey, uuid);
+        } catch {
+          console.warn('Could not store UUID in localStorage');
+        }
+      }
+      
       resolve(uuid);
     };
   });
+};
+
+/**
+ * Get or create a persistent UUID for this device/browser
+ * Maintains backward compatibility with synchronous API
+ */
+const getPersistentUUID = (): string => {
+  const storageKey = 'app_device_uuid';
+  let uuid = localStorage.getItem(storageKey);
+  
+  if (!uuid) {
+    uuid = generateUUID();
+    try {
+      localStorage.setItem(storageKey, uuid);
+    } catch {
+      console.warn('Could not store UUID in localStorage');
+    }
+  }
+  
+  // Initialize IndexedDB storage in the background
+  void getPersistentUUIDFromIndexedDB().then((persistentId: string) => {
+    if (persistentId !== uuid) {
+      setDeviceInfo({ uuid: persistentId });
+    }
+  }).catch((err: Error) => {
+    console.warn('IndexedDB error:', err);
+  });
+  
+  return uuid;
 };
 
 /**
@@ -113,160 +149,34 @@ const detectDeviceName = (): string => {
   return 'Unknown Device';
 };
 
-let deviceInfo: DeviceInfo = { 
+// Default device info for web browsers
+const defaultDeviceInfo: DeviceInfo = {
   deviceName: detectDeviceName(),
+  uuid: getPersistentUUID(),
   osVersion: navigator.userAgent,
-  appVersion: APP_VERSION,
-  uuid: '' // Will be set by IndexedDB (browser) or native side (webview)
+  appVersion: APP_VERSION
 };
 
-/**
- * Collect environment flags that might indicate emulation or suspicious environments
- */
-const collectEnvironmentFlags = (): string[] => {
-  const flags: string[] = [];
-  
-  // Check WebGL renderer for emulation signs
-  try {
-    const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-    if (gl) {
-      // Type assert to WebGLRenderingContext
-      const webGl = gl as WebGLRenderingContext;
-      const renderer = webGl.getParameter(webGl.RENDERER);
-      if (/SwiftShader|llvmpipe|ANGLE/i.test(renderer)) {
-        flags.push(`suspicious_webgl:${renderer}`);
-      } else {
-        // Always add the renderer info even if not suspicious
-        flags.push(`webgl:${renderer}`);
-      }
-      
-      // Add WebGL vendor information
-      const vendor = webGl.getParameter(webGl.VENDOR);
-      flags.push(`webgl_vendor:${vendor}`);
-    }
-  } catch {
-    // Silently catch any WebGL errors
-    flags.push('webgl_error');
-  }
-  
-  // Check for automation-related properties
-  if (navigator.webdriver) {
-    flags.push('webdriver_detected');
-  }
-  
-  // Check for headless browser indicators
-  if (!('ontouchstart' in window) && navigator.maxTouchPoints === 0) {
-    flags.push('no_touch_support');
-  }
-  
-  // Check for inconsistent platform/userAgent
-  const ua = navigator.userAgent.toLowerCase();
-  const platform = navigator.platform.toLowerCase();
-  
-  if (ua.includes('android') && !platform.includes('linux')) {
-    flags.push('platform_ua_mismatch');
-  }
-  
-  if (ua.includes('iphone') && !platform.includes('iphone')) {
-    flags.push('platform_ua_mismatch');
-  }
-  
-  // Add browser features as flags
-  flags.push(`screen:${window.screen.width}x${window.screen.height}`);
-  flags.push(`dpr:${window.devicePixelRatio}`);
-  flags.push(`lang:${navigator.language}`);
-  
-  // Ensure we always have at least one flag
-  if (flags.length === 0) {
-    flags.push('standard_environment');
-  }
-  
-  return flags;
-}
-
-/**
- * Simple hash function for strings
- */
-const hashString = async (str: string): Promise<string> => {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(str);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-/**
- * Initialize device info with persistent UUID from IndexedDB (browser only)
- */
-export const initPersistentDeviceInfo = async (): Promise<void> => {
-  // Only generate UUID if not in webview (browser usage)
-  if (!isMobileWebView()) {
-    try {
-      const persistentUuid = await getPersistentUUIDFromIndexedDB();
-      setDeviceInfo({ uuid: persistentUuid });
-    } catch (err) {
-      console.warn('Failed to initialize persistent device info:', err);
-    }
-  }
-};
-
-export const initDeviceInfo = async () => {
-  // Initialize UUID for browser usage only
-  await initPersistentDeviceInfo();
-  
-  try {
-    const fp = await FingerprintJS.load();
-    const result = await fp.get();
-    
-    // Create enhanced payload with additional fingerprinting data
-    const c = result.components;
-    const payload = {
-      userAgent: navigator.userAgent,
-      screenResolution: `${screen.width}x${screen.height}`,
-      colorDepth: screen.colorDepth,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      language: navigator.language,
-      fonts: c.fonts && 'value' in c.fonts ? c.fonts.value : ['Arial', 'Times New Roman'],
-      canvas: await hashString(JSON.stringify(c.canvas && 'value' in c.canvas ? c.canvas.value : '')),
-      webgl: await hashString(JSON.stringify((c as any).webgl && 'value' in (c as any).webgl ? (c as any).webgl.value : '')),
-      plugins: Array.from(navigator.plugins).map(p => p.name),
-      platform: navigator.platform,
-      hardwareConcurrency: navigator.hardwareConcurrency || 0,
-      deviceMemory: (navigator as any).deviceMemory || 0,
-      touchPoints: navigator.maxTouchPoints || 0,
-      devicePixelRatio: window.devicePixelRatio || 1,
-      env_flags: collectEnvironmentFlags()
-    };
-    
-    deviceInfo = {
-      ...deviceInfo, // Keep existing UUID (from IndexedDB or native)
-      ...payload
-    };
-  } catch (e) {
-    console.warn('FingerprintJS failed:', e);
-  }
-};
+let deviceInfo: DeviceInfo = { ...defaultDeviceInfo };
 
 /**
  * Device info event from native applications
  */
 interface DeviceInfoEvent extends CustomEvent {
-  detail: Partial<any>;
+  detail: Partial<DeviceInfo>;
 }
 
 /**
  * Initialize device info listener for WebView communication
- * Native side will provide device ID
  */
 export const initDeviceInfoListener = (): void => {
   window.addEventListener('getDeviceInfo', ((event: DeviceInfoEvent) => {
     if (event.detail) {
       deviceInfo = {
-        ...deviceInfo,
-        ...event.detail, // Native side provides device ID and other info
+        ...defaultDeviceInfo,
+        ...event.detail,
       };
-      console.log('Device info received from native:', deviceInfo);
+      console.log('Device info received:', deviceInfo);
     }
   }) as EventListener);
 };
@@ -274,7 +184,7 @@ export const initDeviceInfoListener = (): void => {
 /**
  * Get current device information
  */
-export const getDeviceInfo = (): any => {
+export const getDeviceInfo = (): DeviceInfo => {
   return { ...deviceInfo };
 };
 
@@ -282,7 +192,7 @@ export const getDeviceInfo = (): any => {
  * Set device information manually
  * @param info Partial device information to update
  */
-export const setDeviceInfo = (info: Partial<any>): void => {
+export const setDeviceInfo = (info: Partial<DeviceInfo>): void => {
   deviceInfo = {
     ...deviceInfo,
     ...info
@@ -313,10 +223,4 @@ export const isAndroidWebView = (): boolean => {
  */
 export const isMobileWebView = (): boolean => {
   return isIOSWebView() || isAndroidWebView();
-};
-
-/**
- * Check if app version needs update
- * @returns Promise that resolves to true if update is needed
- */
-// This function is now replaced by RTK Query in versionApi.ts 
+}; 

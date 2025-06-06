@@ -37,12 +37,12 @@ import Shield from "@/assets/profile/shield.png";
 import Portal from "./Portal";
 import AuthError from "@/components/shared/auth-error";
 
-const RegisterForm = ({ setIsOpen, refer_code, geetest_id }: any) => {
+const RegisterForm = ({ setIsOpen }: any) => {
   const [flashLoading, setflashLoading] = useState(false);
 
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [code, setCode] = useState(refer_code);
+  const [code, setCode] = useState("");
   const [show验证码, setShow验证码] = useState(false);
   const [showSecurity, setShowSecurity] = useState(false);
   const [captcha, setCaptcha] = useState("");
@@ -84,25 +84,13 @@ const RegisterForm = ({ setIsOpen, refer_code, geetest_id }: any) => {
     e.stopPropagation();
     e.preventDefault();
     const { emailOrPhone, password } = form.getValues();
-
     const { data: registerData, error: registerError } = await register({
       username: emailOrPhone,
       password,
       captcha,
       captcha_key: data?.data?.captcha_key,
-      geetest_id: geetest_id,
       referral_code: code,
     });
-
-
-    if (!registerData) {
-      const message = localStorage.getItem("auth-error");
-      setflashLoading(false);
-      setShow验证码(false);
-      setError(message);
-      setCaptcha("");
-    }
-
     // console.log(registerData, "registerData");
     if (registerData?.status) {
       dispatch(setUser(registerData?.data));
@@ -136,9 +124,9 @@ const RegisterForm = ({ setIsOpen, refer_code, geetest_id }: any) => {
     }
   };
 
-  // useEffect(() => {
-  //   errorHandler();
-  // }, [rerror]);
+  useEffect(() => {
+    errorHandler();
+  }, [rerror]);
   return (
     <>
       {(registerLoading && !show验证码) || isLoading || flashLoading ? (
@@ -170,7 +158,7 @@ const RegisterForm = ({ setIsOpen, refer_code, geetest_id }: any) => {
           </p>
           <div
             onClick={() => {
-              setIsOpen(false);
+              // setIsOpen(false);
               dispatch(setIsDrawerOpen(false));
               dispatch(setAuthToggle(true));
             }}
@@ -233,7 +221,7 @@ const RegisterForm = ({ setIsOpen, refer_code, geetest_id }: any) => {
                         <input
                           type={showPassword ? "text" : "password"}
                           className="block w-full  py-2 text-white bg-transparent bg-clip-padding transition ease-in-out m-0 focus:text-white focus:bg-transparent focus:outline-none "
-                          placeholder="密码必须是6-25个字符"
+                          placeholder="密码必须是8-25个字符"
                           {...field}
                           maxLength={25}
                         />
@@ -278,7 +266,7 @@ const RegisterForm = ({ setIsOpen, refer_code, geetest_id }: any) => {
                   isLoading ||
                   !emailOrPhoneValue ||
                   !passwordValue ||
-                  passwordValue?.length < 6 ||
+                  passwordValue?.length < 8 ||
                   passwordValue?.length > 25
                 }
                 onClick={async () => {
@@ -327,7 +315,7 @@ const RegisterForm = ({ setIsOpen, refer_code, geetest_id }: any) => {
                     size={14}
                     className={`${isLoading ? "animate-spin" : ""}`}
                   />
-                  <p className="text-[14px] text-[#bbb]">刷新</p>
+                  <p className="text-[12px] text-[#bbb]">刷新</p>
                 </div> */}
                   <Button
                     onClick={handleVerify}

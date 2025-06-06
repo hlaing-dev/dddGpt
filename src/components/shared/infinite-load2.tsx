@@ -9,7 +9,7 @@ const Loader = () => {
   );
 };
 
-const RankingLoadMore = ({ data, fetchData, hasMore, userFetching }: any) => {
+const InfiniteLoad2 = ({ data, fetchData, hasMore, scrollableTarget }: any) => {
   return (
     <>
       {data?.length ? (
@@ -17,6 +17,7 @@ const RankingLoadMore = ({ data, fetchData, hasMore, userFetching }: any) => {
           dataLength={data?.length}
           next={fetchData}
           hasMore={hasMore}
+          scrollableTarget={scrollableTarget}
           loader={
             <div className="flex justify-center items-center w-full">
               <Loader />
@@ -34,4 +35,4 @@ const RankingLoadMore = ({ data, fetchData, hasMore, userFetching }: any) => {
   );
 };
 
-export default RankingLoadMore;
+export default InfiniteLoad2;

@@ -39,21 +39,13 @@ const ForgotPassword = () => {
       captcha,
       captcha_key: captchaData?.data?.captcha_key,
     });
-    if (data?.data?.question) {
-      dispatch(setForgotData(data?.data));
-      navigate(paths.check_answer);
-    } else {
+    if (!data?.status) {
       setError("用户名不存在");
       setShow验证码(false);
+    } else {
+      dispatch(setForgotData(data?.data));
+      navigate(paths.check_answer);
     }
-
-    // if (!data?.status && !data?.data?.question) {
-    //   setError("用户名不存在");
-    //   setShow验证码(false);
-    // } else {
-    //   dispatch(setForgotData(data?.data));
-    //   navigate(paths.check_answer);
-    // }
   };
   // console.log(data, "cun");
   return (
@@ -145,7 +137,7 @@ const ForgotPassword = () => {
                   className={`${captchaLoading ? "animate-spin" : ""}`}
                   size={14}
                 />
-                <p className="text-[14px] text-[#bbb]">刷新</p>
+                <p className="text-[12px] text-[#bbb]">刷新</p>
               </div> */}
               <Button
                 onClick={handleVerify}

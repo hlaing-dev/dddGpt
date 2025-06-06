@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom";
 import qr from "../../home/qr.png";
-import copy from "copy-to-clipboard";
 
 const ShareOverlay: React.FC<any> = ({
   alertVisible,
@@ -172,7 +171,9 @@ const ShareOverlay: React.FC<any> = ({
                 className="share_btn"
                 onClick={() => {
                   const shareUrl = config?.app_download_link;
-                  copy(shareUrl);
+                  navigator.clipboard.writeText(shareUrl).catch((err) => {
+                    console.error("Failed to copy the share link: ", err);
+                  });
                 }}
               >
                 Copy share link

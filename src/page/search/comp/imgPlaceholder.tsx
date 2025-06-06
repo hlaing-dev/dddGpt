@@ -29,11 +29,6 @@ const ImageWithPlaceholder = ({
           if (entry.isIntersecting) {
             try {
               const decryptedUrl = await decryptImage(src);
-              if (imgRef.current) {
-                imgRef.current.onload = () => {
-                  URL.revokeObjectURL(decryptedUrl); // revoke after image is loaded
-                };
-              }
               setDecryptedSrc(decryptedUrl);
             } catch (error) {
               console.error("Error decrypting image:", error);
@@ -67,10 +62,7 @@ const ImageWithPlaceholder = ({
         alt={alt}
         className={`${className} image-placeholder`}
         {...props}
-        style={{
-          opacity: decryptedSrc ? "1" : "0",
-          transition: "opacity 0.3s",
-        }}
+        style={{ opacity: decryptedSrc ? "1" : "0", transition: "opacity 0.3s" }}
       />
     </div>
   );

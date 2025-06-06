@@ -80,12 +80,6 @@ export const profileApi = createApi({
         }),
       }),
     }),
-    checkNickname: builder.query<any, any>({
-      query: () => ({
-        url: convertToSecureUrl(`/profile/check-nickname`),
-        method: "Get",
-      }),
-    }),
     changeGender: builder.mutation({
       query: ({ gender }) => ({
         url: convertToSecureUrl(`/profile/change-gender`),
@@ -248,9 +242,9 @@ export const profileApi = createApi({
       }),
     }),
     getNoti: builder.query<any, string>({
-      query: (type) => ({
+      query: () => ({
         url: convertToSecureUrl(
-          `/notification/list?type=general&pageSize=10&page=1&type=${type}`
+          `/notification/list?type=general&pageSize=3&page=1`
         ),
         method: "GET",
       }),
@@ -417,7 +411,7 @@ export const profileApi = createApi({
         url: convertToSecureUrl(`user/personalize/update`),
         method: "POST",
         body: convertToSecurePayload({
-          tags: tags,
+          tags : tags,
           interest: interest,
         }),
       }),
@@ -426,7 +420,6 @@ export const profileApi = createApi({
 });
 
 export const {
-  useCheckNicknameQuery,
   useRemoveAvatarMutation,
   useCoverUploadMutation,
   useAvatarUploadMutation,
@@ -474,5 +467,5 @@ export const {
   useRemoveCoverMutation,
   useGetWatchHistoryQuery,
   useGetMyOwnProfileQuery,
-  usePostPersonalizationMutation,
+  usePostPersonalizationMutation
 } = profileApi;

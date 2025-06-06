@@ -30,7 +30,7 @@ const FollowTabs2 = ({ id, defaultFollowTab, closeTab }: any) => {
               value="follower"
             >
               <div className="flex flex-col ">
-                <span className="font-[16px]">粉丝</span>
+                <span className="">粉丝</span>
                 <div
                   className={`h-[3px] rounded-full w-[50px] ${
                     active == "follower" ? "bg-white" : "bg-transparent"
@@ -44,7 +44,7 @@ const FollowTabs2 = ({ id, defaultFollowTab, closeTab }: any) => {
               value="following"
             >
               <div className="flex flex-col">
-                <span className="font-[16px]">关注列表</span>
+                <span className="">关注列表</span>
                 <div
                   className={`h-[3px] rounded-full w-[70px] ${
                     active == "following" ? "bg-white" : "bg-transparent"
@@ -67,10 +67,10 @@ const FollowTabs2 = ({ id, defaultFollowTab, closeTab }: any) => {
       </div>
       <div className="py-3 px-2 flex-1">
         <TabsContent value="follower">
-          <FollowerList searchTerm={searchTerm} id={id} allowToFetch={false} />
+          <FollowerList searchTerm={searchTerm} id={id} />
         </TabsContent>
         <TabsContent value="following">
-          <FollowingList searchTerm={searchTerm} id={id} allowToFetch={false} />
+          <FollowingList searchTerm={searchTerm} id={id} />
         </TabsContent>
       </div>
     </Tabs>

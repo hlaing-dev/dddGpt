@@ -2,16 +2,11 @@ import ImageWithPlaceholder from "@/page/explore/comp/imgPlaceHolder";
 import { paths } from "@/routes/paths";
 import { setDetails } from "@/store/slices/exploreSlice";
 import AsyncDecryptedImage from "@/utils/asyncDecryptedImage";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { FaHeart } from "react-icons/fa";
 import { FaEarthAmericas } from "react-icons/fa6";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import "../../page/search/search.css";
-import LoadingAnimation from "@/page/search/comp/LoadingAnimation";
-import Hls from "hls.js";
-import Artplayer from "artplayer";
-
 const decryptImage = (arrayBuffer: any, key = 0x12, decryptSize = 4096) => {
   const data = new Uint8Array(arrayBuffer);
   const maxSize = Math.min(decryptSize, data.length);
@@ -21,23 +16,11 @@ const decryptImage = (arrayBuffer: any, key = 0x12, decryptSize = 4096) => {
   // Decode the entire data as text.
   return new TextDecoder().decode(data);
 };
-const VideoCard = ({ videoData, loadingVideoId, setLoadingVideoId }: any) => {
+const VideoCard = ({ videoData }: any) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [isLoad, setIsLoad] = useState(false);
   const [decryptedPhoto, setDecryptedPhoto] = useState("");
-
-  // Video player states
-  const [activeLongPressCard, setActiveLongPressCard] = useState<any>(null);
-  const [playingVideos, setPlayingVideos] = useState<{
-    [key: string]: boolean;
-  }>({});
-
-  const videoPlayerRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
-  const artPlayerInstances = useRef<{ [key: string]: Artplayer | null }>({});
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
-  const loadingTimerRef = useRef<NodeJS.Timeout>();
-  const [loadingDisable, setDisabled] = useState<string | null>(null);
 
   const showDetailsVod = (file: any) => {
     dispatch(setDetails(file));
@@ -88,324 +71,32 @@ const VideoCard = ({ videoData, loadingVideoId, setLoadingVideoId }: any) => {
     loadAndDecryptPhoto();
   }, [videoData?.preview_image]);
 
-  const formatNumber = (num: number) => {
-    if (num >= 1000) {
-      return `${(num / 1000).toFixed(1).replace(/\.0$/, "")}k`;
-    }
-    return num;
-  };
-
-  const calculateHeight = (width: number, height: number) => {
-    if (width > height) {
-      return 112; // Portrait
-    }
-    if (width < height) {
-      return 240; // Landscape
-    }
-    return 200;
-  };
-
-  const cleanupPlayer = (postId: string) => {
-    const player = artPlayerInstances.current[postId];
-    if (player) {
-      // Clean up video resources
-      const video = player.video;
-      if (video) {
-        video.pause();
-        video.removeAttribute("src");
-        video.load();
-      }
-
-      // Destroy HLS instance if it exists
-      if (player?.customType === "m3u8" && player.hls) {
-        player.hls.destroy();
-      }
-
-      player.destroy();
-      delete artPlayerInstances.current[postId];
-    }
-
-    // Clean up playing state
-    setPlayingVideos((prev) => {
-      const newState = { ...prev };
-      delete newState[postId];
-      return newState;
-    });
-  };
-
-  const handleLongPress = (card: any) => {
-    if (playingVideos[card.post_id]) return;
-    if (!card?.preview?.url) return;
-
-    console.log("Touch start on card:", card.post_id);
-
-    if (activeLongPressCard) {
-      cleanupPlayer(activeLongPressCard.post_id);
-    }
-
-    // Pause any currently playing video
-    if (activeLongPressCard) {
-      const currentPlayer =
-        artPlayerInstances.current[activeLongPressCard?.post_id];
-      if (currentPlayer) {
-        currentPlayer.muted = true;
-        currentPlayer.pause();
-        setPlayingVideos((prev) => ({
-          ...prev,
-          [activeLongPressCard.post_id]: false,
-        }));
-      }
-    }
-
-    if (card?.preview?.url) {
-      initializePlayer(card);
-    }
-    setActiveLongPressCard(card);
-  };
-  const initializePlayer = (card: any) => {
-    const container = videoPlayerRefs.current[card.post_id];
-    if (!container) return;
-
-    // Destroy previous instance if exists
-    if (artPlayerInstances.current[card.post_id]) {
-      cleanupPlayer(card.post_id);
-    }
-
-    const isM3u8 = card?.preview?.url?.includes(".m3u8");
-    const hlsRef = { current: null as Hls | null };
-
-    const options: Artplayer["Option"] = {
-      container: container,
-      url: card.preview.url,
-      muted: true,
-      autoplay: true,
-      loop: true,
-      isLive: false,
-      aspectRatio: true,
-      fullscreen: false,
-      theme: "#d53ff0",
-      moreVideoAttr: {
-        playsInline: true,
-        preload: "auto" as const,
-      },
-      type: isM3u8 ? "m3u8" : "auto",
-      customType: {
-        m3u8: (videoElement: HTMLVideoElement, url: string) => {
-          if (Hls.isSupported()) {
-            const hls = new Hls();
-            hlsRef.current = hls;
-            hls.loadSource(url);
-            hls.attachMedia(videoElement);
-          } else if (
-            videoElement.canPlayType("application/vnd.apple.mpegurl")
-          ) {
-            videoElement.src = url;
-          }
-        },
-      },
-      icons: {
-        loading: `<div style="display:none"></div>`,
-        state: `<div style="display:none"></div>`,
-      },
-    };
-
-    try {
-      const player = new Artplayer(options);
-      artPlayerInstances.current[card.post_id] = player;
-
-      player.on("ready", () => {
-        player.play();
-        setPlayingVideos((prev) => ({ ...prev, [card.post_id]: true }));
-        setLoadingVideoId(null);
-        setDisabled(null);
-      });
-
-      player.on("play", () => {
-        setPlayingVideos((prev) => ({ ...prev, [card.post_id]: true }));
-        setLoadingVideoId(null);
-        setDisabled(null);
-      });
-
-      player.on("pause", () => {
-        setPlayingVideos((prev) => ({ ...prev, [card.post_id]: false }));
-      });
-
-      player.on("video:playing", () => {
-        setPlayingVideos((prev) => ({ ...prev, [card.post_id]: true }));
-        setLoadingVideoId(null);
-        setDisabled(null);
-      });
-
-      player.on("video:waiting", () => {
-        setLoadingVideoId(card.post_id);
-        setDisabled(card.post_id);
-      });
-
-      player.on("error", () => {
-        setPlayingVideos((prev) => ({ ...prev, [card.post_id]: false }));
-        setLoadingVideoId(null);
-        setDisabled(null);
-      });
-      artPlayerInstances.current[card.post_id] = player;
-      player.hls = hlsRef.current; // Store HLS reference for cleanup
-
-      // ... rest of your event listeners
-
-      // Add cleanup to player instance
-      player.on("destroy", () => {
-        if (hlsRef.current) {
-          hlsRef.current.destroy();
-          hlsRef.current = null;
-        }
-      });
-    } catch (error) {
-      setPlayingVideos((prev) => ({ ...prev, [card.post_id]: false }));
-      console.error("Error initializing ArtPlayer:", error);
-      setLoadingVideoId(null);
-      setDisabled(null);
-    }
-  };
-
-  const handleTouchStart = (card: any) => {
-    if (loadingVideoId === card.post_id || card.post_id === loadingDisable)
-      return;
-    if (playingVideos[card.post_id]) return;
-    setDisabled(card.post_id);
-    setLoadingVideoId(card.post_id);
-    handleLongPress(card);
-    // longPressTimer.current = setTimeout(() => {
-
-    // }, 500); // 500ms threshold for long press
-  };
-
-  // Clean up all players when component unmounts
-  useEffect(() => {
-    return () => {
-      // Clean up all players
-      Object.keys(artPlayerInstances.current).forEach((postId) => {
-        cleanupPlayer(postId);
-      });
-      artPlayerInstances.current = {};
-
-      // Clear timers
-      if (longPressTimer.current) {
-        clearTimeout(longPressTimer.current);
-        longPressTimer.current = null;
-      }
-
-      if (loadingTimerRef.current) {
-        clearTimeout(loadingTimerRef.current);
-        loadingTimerRef.current = undefined;
-      }
-    };
-  }, []);
-
   return (
-    // <div
-    //   className="bg-gradient-to-r h-[170px] relative"
-    //   // onClick={() => showDetailsVod(videoData)}
-    // >
-    //   <div className="">
-    //     {!decryptedPhoto ? (
-    //       <div className="h-[170px] animate-pulse object-cover w-full object-center bg-[#FFFFFF1F]"></div>
-    //     ) : (
-    //       <ImageWithPlaceholder
-    //         needGradient={true}
-    //         className="h-[170px]  w-full  object-contain"
-    //         width={""}
-    //         height={""}
-    //         alt="preview"
-    //         src={videoData?.preview_image}
-    //       />
-    //     )}
-    //   </div>
-    //   <div className="absolute bottom-0 flex justify-between items-center px-2 w-full">
-    //     <div className="flex items-center gap-1">
-    //       <FaHeart size={10} />
-    //       <span className="text-[14px]">{videoData?.like_count}</span>
-    //     </div>
-    //     <FaEarthAmericas size={10} />
-    //   </div>
-    // </div>
     <div
-      //h-[320px] remove
-      className="chinese_photo  max-w-full relative pt-[20px]"
+      className="bg-gradient-to-r h-[170px] relative"
+      // onClick={() => showDetailsVod(videoData)}
     >
-      <div className="w-full h-[2px] relative">
-        <LoadingAnimation
-          loadingVideoId={loadingVideoId}
-          postId={videoData?.post_id}
-        />
+      <div className="">
+        {!decryptedPhoto ? (
+          <div className="h-[170px] animate-pulse object-cover w-full object-center bg-[#FFFFFF1F]"></div>
+        ) : (
+          <ImageWithPlaceholder
+            needGradient={true}
+            className="h-[170px]  w-full  object-contain"
+            width={""}
+            height={""}
+            alt="preview"
+            src={videoData?.preview_image}
+          />
+        )}
       </div>
-
-      <div
-        className="relative flex justify-center items-center bg-[#010101] rounded-[4px] overflow-hidden h-[240px]"
-        // onClick={() => showDetailsVod(videoData)}
-        onTouchStart={() => handleTouchStart(videoData)}
-      >
-        {/* Video Player */}
-        <div
-          ref={(el) => (videoPlayerRefs.current[videoData.post_id] = el)}
-          className="w-full h-full object-cover rounded-none"
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            zIndex: 1,
-            backgroundColor: "#000",
-            opacity:
-              activeLongPressCard?.post_id === videoData.post_id &&
-              loadingVideoId !== videoData.post_id
-                ? 1
-                : 0,
-            transition: "opacity 1s ease",
-            pointerEvents: "none",
-          }}
-        />
-
-        {/* Image */}
-        <ImageWithPlaceholder
-          src={videoData?.preview_image}
-          alt={videoData.title || "Video"}
-          className="object-cover h-full w-full rounded-none"
-          style={{
-            opacity:
-              activeLongPressCard?.post_id === videoData.post_id &&
-              loadingVideoId !== videoData.post_id
-                ? 0
-                : 1,
-            transition: "opacity 1s ease",
-          }}
-        />
-      </div>
-
-      {/* <ImageWithPlaceholder
-          // needGradient={true}
-          src={videoData?.preview_image}
-          alt={videoData.title || "Video"}
-          width={"100%"}
-          height={calculateHeight(
-            videoData?.files[0]?.width,
-            videoData?.files[0]?.height
-          )}
-          className=" object-cover h-full w-full rounded-none"
-        /> */}
-      <div className="relative">
-        <div className="absolute card_style_2 bottom-0 flex justify-between items-center h-[50px] px-3 w-full">
-          <div className="flex items-center gap-1">
-            <FaHeart size={10} />
-            <span className="text-[14px]">{videoData?.like_count}</span>
-          </div>
-          <FaEarthAmericas size={10} />
+      <div className="absolute bottom-0 flex justify-between items-center px-2 w-full">
+        <div className="flex items-center gap-1">
+          <FaHeart size={10} />
+          <span className="text-[12px]">{videoData?.like_count}</span>
         </div>
+        <FaEarthAmericas size={10} />
       </div>
-
-      <h1 className="search_text font-cnFont line-clamp-2 text-left text-[14px] font-[400] px-[6px] pt-[6px]">
-        {/* <h1 className="search_text font-cnFont px-[6px] line-clamp-2 text-left"> */}
-        {videoData.title.length > 50
-          ? `${videoData.title.slice(0, 50)}...`
-          : videoData.title}
-      </h1>
     </div>
   );
 };

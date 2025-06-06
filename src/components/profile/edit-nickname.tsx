@@ -9,15 +9,11 @@ import { Button } from "../ui/button";
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  useChangeNicknameMutation,
-  useCheckNicknameQuery,
-} from "@/store/api/profileApi";
+import { useChangeNicknameMutation } from "@/store/api/profileApi";
 import { useNavigate } from "react-router-dom";
 import SubmitButton from "../shared/submit-button";
 import Loader from "../shared/loader";
 import { showToast } from "@/page/home/services/errorSlice";
-import { isWebView } from "@/lib/utils";
 
 const EditNickName = ({
   nickname,
@@ -26,24 +22,18 @@ const EditNickName = ({
   nickname: string;
   refetchHandler: any;
 }) => {
-  const { data: checkData, refetch: checkRefetch } = useCheckNicknameQuery("");
-  console.log(checkData?.data, "checkdata");
   const [isOpen, setIsOpen] = useState(false);
   const [value, setValue] = useState(nickname);
+  // console.log(value, ":nnv");
   const [changeNickname, { data, isLoading }] = useChangeNicknameMutation();
   const navigate = useNavigate();
   const closeRef = useRef<HTMLButtonElement>(null);
   const dispatch = useDispatch();
-  const [vh, setVh] = useState("100vh");
-  useEffect(() => {
-    // setVh(isMobile ? "95vh" : "100vh");
-    setVh(isWebView() ? "100vh" : "100dvh");
-  }, []);
+
   const onSubmitHandler = async (e: any) => {
     e.preventDefault();
     await changeNickname({ nickname: value });
     await refetchHandler();
-    checkRefetch();
     // setIsOpen(false);
     closeRef.current?.click();
   };
@@ -59,16 +49,11 @@ const EditNickName = ({
     setValue(nickname);
   }, [isOpen]);
 
-  const user = useSelector((state: any) => state.persist.user);
-  useEffect(() => {
-    if (user) checkRefetch();
-  }, [user, checkRefetch]);
-
   const showErrorToast = () => {
     console.log("eror");
     dispatch(
       showToast({
-        message: checkData?.data?.message,
+        message: "这个功能目前不可用",
         type: "error",
       })
     );
@@ -76,32 +61,28 @@ const EditNickName = ({
 
   return (
     <Drawer open={isOpen} onOpenChange={handleOpenChange}>
-      {checkData?.data?.review_exist ? (
-        <div>
-          <div
-            onClick={() => showErrorToast()}
-            className="text-[14px] flex items-center justify-between"
-          >
-            <h1>昵称</h1>
-            <p className="flex items-center gap-1 text-[#888]">
-              {nickname} <FaAngleRight />
-            </p>
-          </div>
+      {/* <DrawerTrigger>
+        <div className="text-[14px] flex items-center justify-between">
+          <h1>昵称</h1>
+          <p className="flex items-center gap-1 text-[#888]">
+            {nickname} <FaAngleRight />
+          </p>
         </div>
-      ) : (
-        <DrawerTrigger>
-          <div className="text-[14px] flex items-center justify-between">
-            <h1>昵称</h1>
-            <p className="flex items-center gap-1 text-[#888]">
-              {nickname} <FaAngleRight />
-            </p>
-          </div>
-        </DrawerTrigger>
-      )}
-
-      <DrawerContent className="border-0" style={{ height: vh }}>
+      </DrawerTrigger> */}
+      <div>
+        <div
+          onClick={() => showErrorToast()}
+          className="text-[14px] flex items-center justify-between"
+        >
+          <h1>昵称</h1>
+          <p className="flex items-center gap-1 text-[#888]">
+            {nickname} <FaAngleRight />
+          </p>
+        </div>
+      </div>
+      <DrawerContent className="border-0">
         {isLoading ? <Loader /> : <></>}
-        <div className="w-full px-5 bg-[#16131C]">
+        <div className="w-full c-height px-5 bg-[#16131C]">
           <div className="flex justify-between items-center py-5">
             <DrawerClose className="z-[1200]">
               <button>
@@ -109,7 +90,7 @@ const EditNickName = ({
               </button>
             </DrawerClose>
             <p className="text-[16px]">昵称</p>
-            <div className="px-3"></div>
+            <div></div>
           </div>
           <form onSubmit={onSubmitHandler}>
             <label htmlFor="" className="text-[14px] text-[#888] pt-10">

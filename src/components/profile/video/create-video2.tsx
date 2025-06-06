@@ -13,8 +13,6 @@ import { useSearchParams } from "react-router-dom";
 import VideoFeed from "@/page/home/components/VideoFeed";
 import NoVideoCard from "@/components/shared/no-video-card";
 const CreatedVideo2 = ({ id }: any) => {
-  const [loadingVideoId, setLoadingVideoId] = useState<string | null>(null);
-
   const user = useSelector((state: any) => state?.persist?.user);
   const [videos, setVideos] = useState<any[]>([]);
   const [page, setPage] = useState(1);
@@ -102,7 +100,7 @@ const CreatedVideo2 = ({ id }: any) => {
         ) : (
           <>
             <div>
-              <div className="grid grid-cols-2 gap-1">
+              <div className="grid grid-cols-3 gap-1">
                 {videos.map((item: any) => (
                   <div
                     key={item.post_id}
@@ -111,11 +109,7 @@ const CreatedVideo2 = ({ id }: any) => {
                       setShowVideoFeed(true);
                     }}
                   >
-                    <VideoCard
-                      videoData={item}
-                      loadingVideoId={loadingVideoId}
-                      setLoadingVideoId={setLoadingVideoId}
-                    />
+                    <VideoCard videoData={item} />
                   </div>
                 ))}
               </div>

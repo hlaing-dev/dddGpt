@@ -5,10 +5,10 @@ import {
   useGetConfigQuery,
   useGetTopCreatorQuery,
 } from "@/store/api/createCenterApi";
-import { useGetExploreHeaderQuery } from "@/store/api/explore/exploreApi";
 import { UsersRound } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
+import InfinitLoad from "@/components/shared/infinit-load";
 import {
   useGetUserProfileQuery,
   useShareInfoMutation,
@@ -17,7 +17,6 @@ import logo from "@/assets/logo.svg";
 import loader from "@/page/home/vod_loader.gif";
 import OtherRank from "@/components/ranking/other-rank";
 import { useGetUserShareQuery } from "../home/services/homeApi";
-import RankingLoadMore from "@/components/shared/ranking-load-more";
 
 const ranges = [
   { value: "today", title: "今日" },
@@ -37,37 +36,41 @@ const Ranking = () => {
   const [isCopied2, setIsCopied2] = useState(false);
   const [cachedDownloadLink, setCachedDownloadLink] = useState(null);
   const [shareInfo] = useShareInfoMutation();
-  const [ads, setAds] = useState<any>([]);
 
-  const {
-    data: userData,
-    isLoading: userLoading,
-    isFetching: userFetching,
-  } = useGetUserProfileQuery(id, {
-    skip: !id,
-  });
-  const code = userData?.data?.user_code ? userData?.data?.user_code : "";
+  const { data: userData, isLoading: userLoading } = useGetUserProfileQuery(
+    id,
+    {
+      skip: !id,
+    }
+  );
+
+  const code = userData?.data?.user_code ? userData?.data?.user_code : ""
+
 
   const { data: shareData } = useGetUserShareQuery({
     type: "ranking",
     id: code,
     qr_code: 0,
   });
+  // useEffect(() => {
+  //   const fetchShareInfo = async () => {
+  //     try {
+  //       const { data } = await shareInfo({ id });
+  //       const appDownloadLink = data?.data?.link;
+  //       setCachedDownloadLink(appDownloadLink);
+  //     } catch (error) {
+  //       console.error("Error fetching share info:", error);
+  //     }
+  //   };
 
-  const { data: exploreData, isLoading: exploreLoading } = useGetExploreHeaderQuery("");
+  //   fetchShareInfo();
+  // }, [id]);
 
   useEffect(() => {
     if (shareData?.data?.link) {
       setCachedDownloadLink(shareData?.data?.content);
     }
   }, [shareData]);
-
-  useEffect(() => {
-    if (exploreData?.data) {
-      const adsData = exploreData?.data?.ads?.application?.apps;
-      setAds(adsData || []);
-    }
-  }, [exploreData]);
 
   const isIOSApp = () => {
     return (
@@ -89,6 +92,23 @@ const Ranking = () => {
       });
     }
   };
+
+  // const handleCopy2 = async () => {
+  //   // If we already have a cached link, use it
+  //   if (cachedDownloadLink) {
+  //     copyToClipboard(cachedDownloadLink);
+  //     return;
+  //   }
+
+  //   try {
+  //     const { data } = await shareInfo({ id });
+  //     const appDownloadLink = data?.data?.content;
+  //     setCachedDownloadLink(appDownloadLink);
+  //     copyToClipboard(appDownloadLink);
+  //   } catch (error) {
+  //     console.error("Error fetching share info:", error);
+  //   }
+  // };
 
   const handleCopy2 = async () => {
     // If we already have a cached link, use it
@@ -146,6 +166,17 @@ const Ranking = () => {
       setSelectedType(configData?.data?.creator_center_ranking_filter[0]);
   }, [configData]);
   useEffect(() => {
+    // const handleScroll = () => {
+    //   if (headerRef.current) {
+    //     const rect = headerRef.current.getBoundingClientRect();
+    //     if (rect.top <= 100) {
+    //       setShowHeader(true);
+    //     } else {
+    //       setShowHeader(false);
+    //     }
+    //   }
+    // };
+
     const handleScroll = () => {
       if (headerRef.current) {
         const rect = headerRef.current.getBoundingClientRect();
@@ -162,7 +193,7 @@ const Ranking = () => {
   }, []);
 
   useEffect(() => {
-    if (totalData <= rankingList.length || rankingList.length < 20) {
+    if (totalData <= rankingList.length) {
       setHasMore(false);
     } else {
       setHasMore(true);
@@ -216,9 +247,17 @@ const Ranking = () => {
     }
   }, [user?.token, refetch]);
 
+  // useEffect(() => {
+  //   setSelectedRange({
+  //     value: "today",
+  //     title: "今日",
+  //   });
+  // }, [selectedType]);
+  // console.log(data);
+
   useEffect(() => {
-    if (page == 6) setHasMore(false);
-  }, [page]);
+    if (rankingList?.length >= 100) setHasMore(false);
+  }, [rankingList]);
 
   if (loading1 && isLoading && page === 1) return <Loader />;
 
@@ -263,41 +302,6 @@ const Ranking = () => {
         </div>
         <div ref={headerRef} className="w-full"></div>
 
-        {/* Ads Section - Only in normal view, not sticky */}
-        <div className="pt-[20px] px-[10px]">
-          {/* <h1 className="text-white text-[14px] font-[500] leading-[20px] pb-[12px] px-1">
-            {exploreData?.data?.ads?.application?.title || ""}
-          </h1> */}
-          {exploreLoading ? (
-            <div className="grid grid-cols-6 gap-[20px]">
-              {[...Array(12)].map((_, index) => (
-                <div key={index} className="w-[56px] h-[53px] rounded-md bg-white/20 animate-pulse"></div>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-6 gap-[5px]">
-              {ads?.map((app: any) => (
-                <a
-                  key={app.id}
-                  href={app.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex flex-col justify-center items-center gap-[4px]"
-                >
-                  <img
-                    className="min-w-[56px] min-h-[56px] rounded-[6px] border-[#222]"
-                    src={app.image}
-                    alt={app.title}
-                  />
-                  <h1 className="text-white ad_update text-[14px] font-[400]">
-                    {app.title}
-                  </h1>
-                </a>
-              ))}
-            </div>
-          )}
-        </div>
-
         <div
           className={`w-full sticky top-0 ${
             showHeader ? "ccbg2 z-50 pb-1" : ""
@@ -310,7 +314,6 @@ const Ranking = () => {
           ) : (
             <></>
           )}
-          
           <div className="flex items-center gap-4 px-2">
             {configData?.data?.creator_center_ranking_filter?.map(
               (tag: any) => (
@@ -351,7 +354,7 @@ const Ranking = () => {
             {ranges?.map((range: any) => (
               <button
                 onClick={() => setSelectedRange(range)}
-                className={`text-[14px] ${
+                className={`text-[12px] ${
                   selectedRange?.value == range?.value
                     ? "text-white bg-[#FFFFFF1F]"
                     : "text-[#999] bg-[#FFFFFF05]"
@@ -367,27 +370,22 @@ const Ranking = () => {
             <div className="flex w-full items-center justify-center pt-[100px]">
               <img src={loader} alt="" className="w-12" />
             </div>
-          ) : rankingList?.length > 3 ? (
+          ) : rankingList?.length ? (
             <OtherRank data={rankingList} refetch={refetch} />
           ) : (
             <div className="w-full flex justify-center items-center mt-[100px]">
               <div className="flex flex-col justify-center items-center gap-3">
                 <UsersRound className="text-[#888888]" />
-                <p className="text-[14px] text-[#888888]">当前没有创作者展示</p>
+                <p className="text-[12px] text-[#888888]">当前没有创作者展示</p>
               </div>
             </div>
           )}
         </div>
-        {page !== 6 ? (
-          <RankingLoadMore
-            userFetching={userFetching}
-            data={rankingList}
-            fetchData={fetchMoreData}
-            hasMore={hasMore}
-          />
-        ) : (
-          <></>
-        )}
+        <InfinitLoad
+          data={rankingList}
+          fetchData={fetchMoreData}
+          hasMore={hasMore}
+        />
         {user?.token ? <MyRankCard myrank={data?.data?.my_rank} /> : <></>}
       </div>
       <div className="py-32"></div>
