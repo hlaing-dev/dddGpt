@@ -14,6 +14,8 @@ const TopNavbar = ({
 }) => {
   const isOpen = useSelector((state: any) => state.profile.isDrawerOpen);
   const user = useSelector((state: any) => state?.persist?.user) || "";
+  const { hideBar } = useSelector((state: any) => state.hideBarSlice);
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const TABS = [
@@ -23,7 +25,10 @@ const TopNavbar = ({
   ];
 
   return (
-    <div className="absolute top-5 left-0 px-5 right-0 flex justify-between items-center z-[9999] max-w-[480px] mx-auto">
+    <div
+      style={{ display: hideBar ? "none" : "flex" }}
+      className=" absolute top-5 left-0 px-5 right-0 flex justify-between items-center z-[9999] max-w-[480px] mx-auto"
+    >
       <div
         onClick={
           user?.token
@@ -46,7 +51,7 @@ const TopNavbar = ({
             <p
               className={`${
                 currentTab == tab.id
-                  ? "text-[20px] opacity-100 font-semibold home-normal-text-shadow"
+                  ? "text-[24px] opacity-100 font-semibold home-normal-text-shadow"
                   : "home-normal-text"
               }`}
             >

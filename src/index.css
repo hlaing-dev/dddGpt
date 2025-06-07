@@ -17,6 +17,24 @@
   font-weight: normal;
   font-style: normal;
 }
+@font-face {
+  font-family: "sfProB";
+  src: url("./assets/sfprodisplayB.OTF") format("opentype");
+  font-weight: bold;
+  font-style: normal;
+}
+@font-face {
+  font-family: "sfProS";
+  src: url("./assets/sfprodisplayS.OTF") format("opentype");
+
+  font-style: normal;
+}
+@font-face {
+  font-family: "sfProM";
+  src: url("./assets/sfprodisplayM.OTF") format("opentype");
+  font-weight: bold;
+  font-style: normal;
+}
 
 body {
   scrollbar-width: none !important;
@@ -25,6 +43,60 @@ body {
 body::-webkit-scrollbar {
   display: none !important; /* For Chrome, Safari, and Edge */
 }
+
+img {
+  -webkit-touch-callout: none !important;
+}
+@keyframes loading-line {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+.loading-line-container {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 2px;
+}
+
+.loading-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background-color: #cc3efe;
+  animation: loading-line 1.5s linear forwards; /* 'forwards' keeps final state */
+  /* transform: translateX(-100%); Start position */
+}
+/* 
+@keyframes loading-line {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.loading-line-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.loading-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  background-color: #cc3efe; 
+  animation: loading-line 1.5s linear infinite;
+} */
 
 @layer base {
   :root {
@@ -404,15 +476,6 @@ input:checked + .slider:before {
   background-repeat: no-repeat;
 }
 
-.rankbg {
-  width: 100%;
-  height: 176px; /* Adjust as needed */
-  background-image: url("./assets/createcenter/rbg.png"); /* Replace with your image URL */
-  background-size: cover; /* Ensures the image covers the div */
-  background-position: center;
-  background-repeat: no-repeat; /* Prevents repetition */
-}
-
 .rankbg-gradient {
   width: 100%;
   height: 176px;
@@ -646,12 +709,18 @@ input:checked + .slider:before {
   text-shadow: 0px 1px 1px #000000;
 }
 
+@media screen and (max-width: 400px) {
+  .ad_update {
+    font-size: 12px;
+  }
+}
+
 .home-normal-text {
   text-shadow: 0 1px 1px #000000;
 
   /* font-family: Source Han Sans CN; */
   font-weight: 400;
-  font-size: 16px;
+  font-size: 18px;
   line-height: 20px;
   letter-spacing: 0.25px;
   opacity: 0.5;
@@ -835,4 +904,21 @@ input:focus {
 user_feed_ques_tags_btn {
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.12);
+}
+
+.geetest_captcha.geetest_dark .geetest_box_wrap .geetest_box {
+  background-color: #2c2d31 !important;
+}
+
+.card_style_2 {
+  background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0.7) 100%
+    ),
+    linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.7) 100%);
+}
+
+.art-video-player .art-mask {
+  z-index: 20 !important;
 }

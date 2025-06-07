@@ -11,6 +11,7 @@ import "swiper/css";
 import "swiper/css/autoplay"; // Import Swiper autoplay styles
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules"; // Import Swiper's autoplay module
+import ImageWithPlaceholder1 from "../explore/comp/ImgPlaceHolder1.tsx";
 
 const Application: React.FC<any> = () => {
   const [ad, setAd] = useState([]);
@@ -214,7 +215,7 @@ const Application: React.FC<any> = () => {
                 {applicationData?.header?.length > 0 &&
                   applicationData?.header.map((header: any) => (
                     <a href={header.url} target="_blank" key={header.id}>
-                      <ImageWithPlaceholder
+                      <ImageWithPlaceholder1
                         className="rounded-md"
                         alt="Header Image"
                         width="100%"
@@ -236,22 +237,22 @@ const Application: React.FC<any> = () => {
                         {appSection.title}
                       </h1>
                     )}
-                    <div className="grid grid-cols-6 gap-[10px]">
+                    <div className="grid grid-cols-6 gap-[5px]">
                       {appSection?.apps?.map((app: any) => (
                         <a
                           key={app.id}
                           href={app.url}
                           target="_blank"
-                          className="flex flex-col justify-center items-center gap-[4px]"
+                          className="flex flex-col justify-center items-center gap-[6px]"
                         >
-                          <ImageWithPlaceholder
-                            className="w-[52px] h-[52px] rounded-[6px] border-[#222]"
+                          <ImageWithPlaceholder1
+                            className="min-w-[56px] min-h-[56px] rounded-[6px] border-[#222]"
                             src={app.image}
                             width={""}
                             height={""}
                             alt={app.title}
                           />
-                          <h1 className="text-white text-[10px] font-[400]">
+                          <h1 className="text-white text-[14px] font-[400]">
                             {app.title}
                           </h1>
                         </a>
@@ -271,7 +272,7 @@ const Application: React.FC<any> = () => {
                     target="_blank"
                     key={applicationData?.footer[0].id}
                   >
-                    <ImageWithPlaceholder
+                    <ImageWithPlaceholder1
                       className="mt-[5px] rounded-md"
                       alt="Footer Image"
                       width={"100%"}

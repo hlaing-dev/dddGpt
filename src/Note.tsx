@@ -1,209 +1,324 @@
-import { useEffect, useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
-import { Input } from "@/components/ui/input";
-import { usePostsSearchMutation } from "@/store/api/profileApi";
-import { ChevronLeft, Search } from "lucide-react";
-import { FaSearch } from "react-icons/fa";
-import VideoCard from "../video-card";
-import InfinitLoad from "@/components/shared/infinit-load";
+  setAlertText,
+  setAuthToggle,
+  setIsDrawerOpen,
+  setShowAlert,
+} from "@/store/slices/profileSlice";
+import { paths } from "@/routes/paths";
+import { ChevronLeft, Eye, EyeOff, RotateCcw, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { Link, useNavigate } from "react-router-dom";
+import { LoginFormData, loginSchema } from "@/page/auth/schema";
+import { zodResolver } from "@hookform/resolvers/zod";
 import loader from "@/page/home/vod_loader.gif";
-import { useSearchParams } from "react-router-dom";
-import VideoFeed from "@/page/home/components/VideoFeed";
-// import {
-//   isMobile,
-//   isAndroid,
-//   isIOS,
-//   isBrowser,
-//   isChrome,
-//   isIOS13,
-//   getUA,
-// } from "react-device-detect";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  useGetCaptchaMutation,
+  useRegisterMutation,
+} from "@/store/api/authApi";
+import { useDispatch } from "react-redux";
+import { setUser } from "@/store/slices/persistSlice";
+import Shield from "@/assets/profile/shield.png";
+import AuthError from "@/components/shared/auth-error";
 
-export function isWebView() {
-  return (
-    (window as any).webkit &&
-    (window as any).webkit.messageHandlers &&
-    (window as any).webkit.messageHandlers.jsBridge
-  );
-  // const ua = navigator.userAgent || "";
-  // const standalone = window.navigator.standalone;
+const RegisterForm = ({ setIsOpen }: any) => {
+  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [code, setCode] = useState("");
+  const [show验证码, setShow验证码] = useState(false);
+  const [showSecurity, setShowSecurity] = useState(false);
+  const [captcha, setCaptcha] = useState("");
+  const [getCaptcha, { data, isLoading }] = useGetCaptchaMutation();
+  const [
+    register,
+    { isLoading: registerLoading, data: rdata, error: rerror, isError },
+  ] = useRegisterMutation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const authErr = localStorage.getItem("auth-error") || "验证码错误";
 
-  // const isIOS = /iPhone|iPad|iPod/.test(ua);
-  // const isAndroid = /Android/.test(ua);
+  const form = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      emailOrPhone: "",
+      password: "",
+    },
+  });
 
-  // const isIOSWebView =
-  //   isIOS && (!ua.includes("Safari") || standalone === false);
-  // const isAndroidWebView = isAndroid && ua.includes("wv");
+  const { watch } = form;
+  const emailOrPhoneValue = watch("emailOrPhone");
+  const passwordValue = watch("password");
+  async function onSubmit(data: LoginFormData) {
+    // Handle form submission
+    // await getCaptcha();
+    // setShow验证码(true);
+  }
 
-  // const isCustomFlag = window.IS_APP === true; // if injected from native
-
-  // return isIOSWebView || isAndroidWebView || isCustomFlag;
-}
-
-const SearchVideo = ({ id }: { id: string }) => {
-  const [vh, setVh] = useState("100vh");
-  const [postsSearch, { isLoading }] = usePostsSearchMutation();
-  const [search, setSearch] = useState<string>("");
-  const [videos, setVideos] = useState<any[]>([]);
-  const [page, setPage] = useState(1);
-  const [page2, setPage2] = useState(2);
-  const [hasMore, setHasMore] = useState(true);
-  const [totalData, setTotalData] = useState<number>(0);
-
-  const [searchParams] = useSearchParams();
-  const initialQuery = searchParams.get("query") || "";
-  const [query, setQuery] = useState(initialQuery);
-  const [selectedMovieId, setSelectedMovieId] = useState(null);
-  const [showVideoFeed, setShowVideoFeed] = useState(false);
-
-  const searchHandler = async () => {
-    setPage(1);
-    setPage2(2);
-    if (search.trim() !== "") {
-      const { data } = await postsSearch({ page: 1, search, user_id: id });
-      setVideos(data?.data?.list ?? []);
-      setTotalData(data?.pagination?.total ?? 0);
-    } else {
-      setVideos([]);
-      setTotalData(0);
+  const handleVerify = async (e: any) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const { emailOrPhone, password } = form.getValues();
+    const { data: registerData, error: registerError } = await register({
+      username: emailOrPhone,
+      password,
+      captcha,
+      captcha_key: data?.data?.captcha_key,
+      referral_code: code,
+    });
+    if (registerData?.status) {
+      dispatch(setUser(registerData?.data));
+      dispatch(setIsDrawerOpen(false));
+      dispatch(setShowAlert(true));
+      dispatch(setAlertText(registerData?.message));
+      setIsOpen(false);
+      dispatch(setIsDrawerOpen(false));
+      setShow验证码(false);
+    }
+  };
+  const errorHandler = async () => {
+    if (rerror?.originalStatus == 400) {
+      setShow验证码(false);
+      setError("该用户名已存在");
+      setCaptcha("");
+    }
+    if (rerror?.originalStatus == 422) {
+      setShow验证码(false);
+      setError("验证码错误");
+      setCaptcha("");
+      await getCaptcha("");
+      setShow验证码(true);
     }
   };
 
   useEffect(() => {
-    if (totalData <= videos.length) {
-      setHasMore(false);
-    } else {
-      setHasMore(true);
-      fetchMoreData();
-    }
-  }, [totalData, videos]);
-
-  const fetchMoreData = async () => {
-    if (search.trim() !== "") {
-      setPage2((prev) => prev + 1);
-      const { data } = await postsSearch({ page: page2, search, user_id: id });
-      setVideos((prev) => [...prev, ...(data?.data?.list ?? [])]);
-    }
-  };
-
-  // useEffect(() => {
-  //   setSearch(null);
-  //   setPage(1);
-  //   setPage2(2);
-  //   setVideos([]);
-  //   setHasMore(false);
-  //   setTotalData(0);
-  // }, []);
-
-  // console.log(page);
-  // useEffect(() => {
-  //   if (!isInWebView()) {
-  //     // console.log("application");
-  //     setVh("95vh");
-  //   } else {
-  //     // console.log("website");
-  //     setVh("100vh");
-  //   }
-  // }, []);
-  useEffect(() => {
-    // setVh(isMobile ? "95vh" : "100vh");
-    setVh(isWebView() ? "100vh" : "100dvh");
-  }, []);
-
-  console.log(isLoading)
-
+    errorHandler();
+  }, [rerror]);
   return (
-    <div className={`${showVideoFeed ? "z-[9900] relative h-screen" : ""}`}>
-      <Drawer>
-        <DrawerTrigger>
-          <div className="bg-[#FFFFFF1F] w-10 h-10 flex justify-center items-center p-2 rounded-full">
-            <Search size={18} />
+    <>
+      {(isLoading && !show验证码) || isLoading ? (
+        <div className="h-screen bg-[#00000099] fixed top-0 left-0 w-full z-[9999] flex justify-center items-center">
+          <div className="bg-[#000000E5] p-1 rounded">
+            <img src={loader} alt="" className="w-14" />
           </div>
-        </DrawerTrigger>
+        </div>
+      ) : (
+        <></>
+      )}
+      <div className="px-5">
+        {isError ? <AuthError message={error} /> : <></>}
 
-        {showVideoFeed && selectedMovieId ? (
-          <div className="z-[9999] h-screen fixed top-0 overflow-y-scroll left-0 w-full">
-            <VideoFeed
-              // setPage={setPage2}
-              setVideos={setVideos}
-              videos={videos}
-              currentActiveId={selectedMovieId}
-              setShowVideoFeed={setShowVideoFeed}
-              query={query}
-            />
-          </div>
-        ) : (
-          <DrawerContent
-            className={`z-[8900] border-0 `}
-            style={{ height: vh }}
+        <div className="flex justify-between items-center">
+          <div className="px-3"></div>
+          <p className="text-[18px]">
+            创建账户
+            {/* Register */}
+          </p>
+          <div
+            onClick={() => {
+              // setIsOpen(false);
+              dispatch(setIsDrawerOpen(false));
+              dispatch(setAuthToggle(true));
+            }}
+            className="bg-[#FFFFFF0A] p-2 rounded-full"
           >
-            <>
-              <div className="c-height w-full overflow-y-scroll hide-sb">
-                <div className=" px-5 z-[8000]  bg-[#16131C] sticky top-0 py-5 flex items-center gap-3">
-                  <DrawerClose
-                    onClick={() => {
-                      setSearch("");
-                      setPage(1);
-                      setPage2(2);
-                      setVideos([]);
-                      setHasMore(false);
-                      setTotalData(0);
-                    }}
-                  >
-                    <ChevronLeft size={18} />
-                  </DrawerClose>
-                  <div className="border border-gray-700 w-full rounded-full shadow-md flex items-center pl-4">
-                    <FaSearch />
-                    <Input
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder="搜索作品"
-                      className="bg-transparent placeholder:text-white rounded-full border-0 focus:border-transparent focus-visible:ring-0"
-                    />
-                  </div>
-                  <button onClick={searchHandler} className="w-[50px]">
-                    搜索
-                  </button>
-                </div>
-                {isLoading && page == 1 && page2 == 2 ? (
-                  <div className="w-full flex justify-center items-center mt-[100px]">
-                    <img src={loader} className="w-14" alt="" />
-                  </div>
-                ) : (
-                  <div className="py-5">
-                    <div className="grid grid-cols-3 gap-1">
-                      {videos.map((item: any) => (
-                        <div
-                          key={item.post_id}
-                          onClick={() => {
-                            // console.log(item);
-                            setSelectedMovieId(item?.post_id);
-                            setShowVideoFeed(true);
+            <X size={18} />
+          </div>
+        </div>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-8 pt-5 pb-10"
+          >
+            <FormField
+              control={form.control}
+              name="emailOrPhone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <>
+                      <label htmlFor="" className="text-[14px] text-[#888]">
+                        用户名
+                      </label>
+                      <div className="relative">
+                        <input
+                          className="block w-full  py-2 text-white bg-transparent bg-clip-padding transition ease-in-out m-0 focus:text-white focus:bg-transparent focus:outline-none "
+                          placeholder="输入用户名"
+                          {...field}
+                        />
+                        {field.value && (
+                          <div
+                            className="w-6 h-6 rounded-full flex justify-center items-center bg-[#FFFFFF1F] absolute right-0 bottom-2"
+                            onClick={() => {
+                              field.onChange("");
+                            }}
+                          >
+                            <X size={9} />
+                          </div>
+                        )}
+                        <div className="w-full h-[1px] bg-[#FFFFFF0A]"></div>
+                      </div>
+                    </>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem className="relative">
+                  <FormControl>
+                    <>
+                      <label htmlFor="" className="text-[14px] text-[#888]">
+                        密码
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          className="block w-full  py-2 text-white bg-transparent bg-clip-padding transition ease-in-out m-0 focus:text-white focus:bg-transparent focus:outline-none "
+                          placeholder="密码必须是8-25个字符"
+                          {...field}
+                          maxLength={25}
+                        />
+                        <button
+                          className=" absolute right-0 bottom-2"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setShowPassword(!showPassword);
                           }}
                         >
-                          <VideoCard videoData={item} />
-                        </div>
-                      ))}
-                    </div>
-                    <InfinitLoad
-                      data={videos}
-                      fetchData={fetchMoreData}
-                      hasMore={hasMore}
+                          {showPassword ? (
+                            <Eye className="w-[18px]" />
+                          ) : (
+                            <EyeOff className="w-[18px]" />
+                          )}
+                        </button>
+                        <div className="w-full h-[1px] bg-[#FFFFFF0A]"></div>
+                      </div>
+                    </>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+
+            <input
+              type="text"
+              placeholder="用户名输入邀请码（可选）"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              className="bg-[#37363A] border-0 rounded-lg text-white placeholder:text-gray-600 px-4 py-4 text-center placeholder:text-center w-full outline-none"
+            />
+
+            <div className="">
+              <Button
+                disabled={
+                  isLoading ||
+                  !emailOrPhoneValue ||
+                  !passwordValue ||
+                  passwordValue?.length < 8 ||
+                  passwordValue?.length > 25
+                }
+                onClick={async () => {
+                  await getCaptcha("");
+                  setShow验证码(true);
+                }}
+                className="w-full gradient-bg rounded-lg hover:gradient-bg"
+              >
+                确认
+              </Button>
+            </div>
+            <Dialog open={show验证码} onOpenChange={setShow验证码}>
+              <DialogContent className="bg-[#393641] z-[3000] border-0 shadow-lg rounded-lg max-w-[300px]">
+                <DialogHeader>
+                  <DialogTitle className="text-white text-[16px]">
+                    验证码
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-6">
+                  <div className="flex justify-center items-center gap-1 h-[36px]">
+                    <input
+                      value={captcha}
+                      onChange={(e) => setCaptcha(e.target.value)}
+                      placeholder="输入验证码"
+                      className="bg-[#2D2738] w-[70%] px-[10px] h-full outline-none"
+                    />
+
+                    <img
+                      src={data?.data?.img}
+                      className="w-[30%]  h-full  object-center outline-none border-gray-400"
+                      alt=""
                     />
                   </div>
-                )}
-              </div>
-            </>
-          </DrawerContent>
-        )}
-      </Drawer>
-    </div>
+                  <Button
+                    onClick={handleVerify}
+                    disabled={
+                      registerLoading ? true : false || !captcha?.length
+                    }
+                    type="submit"
+                    className="w-full gradient-bg hover:gradient-bg text-white rounded-lg"
+                  >
+                    {/* {registerLoading ? <SmallLoader /> : "确认"} */}
+                    确认
+                    {/* Verify */}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Dialog open={showSecurity} onOpenChange={setShowSecurity}>
+              <DialogContent className="bg-[#242424] max-w-[340px] border-0 rounded-[16px]">
+                <DialogHeader>
+                  <DialogTitle className="text-white text-[16px]">
+                    Security Question
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-6">
+                  <img src={Shield} className="w-[77px] mx-auto" alt="" />
+                  <p className="text-[14px]">
+                    Set up security question to protect your account from lost
+                    or forgotten passwords and theft. You can also choose to do
+                    this later.
+                  </p>
+                  <div className="space-y-2">
+                    <Button
+                      onClick={() => navigate(paths.security_questions)}
+                      className="w-full gradient-bg rounded-[16px] hover:gradient-bg"
+                    >
+                      Continue
+                    </Button>
+                    <Button
+                      onClick={() => navigate(paths.login)}
+                      className="w-full bg-[#444444] rounded-[16px] hover:bg-[#444444]"
+                    >
+                      Later
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </form>
+        </Form>
+      </div>
+    </>
   );
 };
 
-export default SearchVideo;
+export default RegisterForm;

@@ -10,7 +10,7 @@ import { UsersRound } from "lucide-react";
 import { FaSearch } from "react-icons/fa";
 import { Input } from "@/components/ui/input";
 
-const FollowerList = ({ searchTerm, id }: any) => {
+const FollowerList = ({ searchTerm, id, allowToFetch }: any) => {
   // const [searchTerm, setSearchTerm] = useState("");
   const [followers, setFollowers] = useState<any>([]);
   const [page, setPage] = useState(1);
@@ -23,7 +23,7 @@ const FollowerList = ({ searchTerm, id }: any) => {
       page,
     },
     {
-      skip: !user,
+      skip: allowToFetch,
     }
   );
 
@@ -113,8 +113,8 @@ const FollowerList = ({ searchTerm, id }: any) => {
             <div className="flex justify-center mt-[40%]">
               <div className="flex flex-col items-center gap-3">
                 <UsersRound className="text-[#888]" />
-                <p className="text-[12px] text-[#888] w-[90px] text-center">
-                  快关注你感兴 趣的用户吧！
+                <p className="text-[14px] text-[#888] w-[90px] text-center">
+                  暂无账户
                 </p>
               </div>
             </div>
@@ -148,8 +148,8 @@ const FollowerList = ({ searchTerm, id }: any) => {
             <div className="h-full flex justify-center mt-[40%]">
               <div className="flex flex-col items-center gap-3">
                 <UsersRound className="text-[#888]" />
-                <p className="text-[12px] text-[#888] w-[90px] text-center">
-                  快关注你感兴 趣的用户吧！
+                <p className="text-[14px] text-[#888] w-[90px] text-center">
+                  暂无账户
                 </p>
               </div>
             </div>

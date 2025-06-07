@@ -680,7 +680,6 @@ const VideoContainerFeed = ({
   videoData,
   setrenderVideos,
   setVideosData,
-  isActiveState,
 }: {
   video: any;
   setWidth: any;
@@ -700,11 +699,11 @@ const VideoContainerFeed = ({
   videoData: any;
   setrenderVideos: any;
   setVideosData: any;
-  isActiveState: any;
 }) => {
   const [likeCount, setLikeCount] = useState(video?.like_count);
   const [isLiked, setIsLiked] = useState(video?.is_liked);
   const [commentCount, setcommentCount] = useState(video?.comment_count);
+  const [showRotate, setShowRotate] = useState(false);
 
   const user = useSelector((state: any) => state.persist.user);
   const [likePost] = useLikePostMutation();
@@ -719,12 +718,6 @@ const VideoContainerFeed = ({
 
   // Add state to track if this video is active
   const [isActive, setIsActive] = useState(false);
-
-  useEffect(() => {
-    setLikeCount(video?.like_count);
-    setIsLiked(video?.is_liked);
-    setcommentCount(video?.comment_count);
-  }, [video]);
 
   const handleLike = (() => {
     const likeTimeout = useRef<NodeJS.Timeout | null>(null); // Track the debounce timeout
@@ -1010,6 +1003,18 @@ const VideoContainerFeed = ({
     observer.observe(element);
     return () => observer.disconnect();
   }, [video.post_id]);
+  const [isPortrait, setIsPortrait] = useState(false);
+
+  useEffect(() => {
+    if (video?.decryptedPreview) {
+      const img = new Image();
+      img.onload = function () {
+        // Compare width and height of the decrypted image
+        setIsPortrait(img.width <= img.height);
+      };
+      img.src = video.decryptedPreview;
+    }
+  }, [video?.decryptedPreview]);
 
   if (isOpen) {
     return <LoginDrawer isOpen={isOpen} setIsOpen={setIsOpen} />;
@@ -1017,37 +1022,27 @@ const VideoContainerFeed = ({
 
   return (
     <>
-      {isActiveState ? (
-        <Player
-          videoData={videoData}
-          indexRef={indexRef}
-          abortControllerRef={abortControllerRef}
-          width={video?.files[0].width}
-          height={video?.files[0].height}
-          type={video?.type == "ads" ? true : false}
-          p_img={video?.files[0].width > video?.files[0].height}
-          rotate={rotateVideoId === video?.post_id}
-          src={video?.files[0].resourceURL}
-          //  thumbnail={video?.preview_image || ""}
-          thumbnail={video?.decryptedPreview || video?.preview_image}
-          handleLike={handleLike}
-          setWidth={setWidth}
-          setHeight={setHeight}
-          post_id={post_id}
-          isActive={isActive}
-        />
-      ) : (
-        <div className="w-full h-full relative">
-          <img
-            src={video.decryptedPreview || video.preview_image}
-            alt="Preview"
-            className={`${
-              video?.files[0]?.width > height ? "image_change" : ""
-            }`}
-          />
-        </div>
-      )}
-
+      {" "}
+      <Player
+        video={video}
+        videoData={videoData}
+        indexRef={indexRef}
+        abortControllerRef={abortControllerRef}
+        width={video?.files[0].width}
+        height={video?.files[0].height}
+        p_img={!isPortrait}
+        type={video?.type == "ads" ? true : false}
+        rotate={rotateVideoId === video?.post_id}
+        src={video?.files[0].resourceURL}
+        //  thumbnail={video?.preview_image || ""}
+        thumbnail={video?.decryptedPreview || video?.preview_image}
+        handleLike={handleLike}
+        setWidth={setWidth}
+        setHeight={setHeight}
+        post_id={post_id}
+        isActive={isActive}
+        setShowRotate={setShowRotate}
+      />
       <VideoSidebarFeed
         setVideosData={setVideosData}
         status={status}
@@ -1074,7 +1069,8 @@ const VideoContainerFeed = ({
       />
       {/* Rotate button - only show for non-ads landscape videos */}
       {video?.type !== "ads" &&
-        video?.files[0].width > video?.files[0].height && (
+        video?.files[0].width > video?.files[0].height &&
+        !showRotate && (
           <button
             onClick={() => handleFullscreen(video)}
             className="absolute left-[37%] top-[70%] bottom-0 right-0 w-[120px] bg-[#101010] h-[35px] rounded-md flex justify-center items-center z-[99] text-center text-white"
