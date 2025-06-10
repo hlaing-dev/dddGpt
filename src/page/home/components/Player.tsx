@@ -4658,6 +4658,81 @@ const Player = ({
     };
   }, []);
 
+  // Add this cleanup function to your component
+  const cleanupResources = () => {
+    // Clean up sprite image URL
+    if (spriteImageUrlRef.current) {
+      URL.revokeObjectURL(spriteImageUrlRef.current);
+      spriteImageUrlRef.current = null;
+    }
+
+    // Clean up player instance
+    if (artPlayerInstanceRef.current) {
+      // Remove all event listeners
+      artPlayerInstanceRef.current.off("ready");
+      artPlayerInstanceRef.current.off("video:timeupdate");
+      artPlayerInstanceRef.current.off("play");
+      artPlayerInstanceRef.current.off("pause");
+      artPlayerInstanceRef.current.off("video:playing");
+      artPlayerInstanceRef.current.off("video:pause");
+      artPlayerInstanceRef.current.off("video:loadstart");
+      artPlayerInstanceRef.current.off("video:canplay");
+      artPlayerInstanceRef.current.off("video:ended");
+      artPlayerInstanceRef.current.off("error");
+      artPlayerInstanceRef.current.off("video:waiting");
+
+      // Destroy video element
+      const video = artPlayerInstanceRef.current.video;
+      if (video) {
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
+      }
+
+      // Destroy player
+      artPlayerInstanceRef.current.destroy();
+      artPlayerInstanceRef.current = null;
+    }
+
+    // Clean up HLS instance
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
+      hlsRef.current = null;
+    }
+
+    // Clear all timers
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+
+    if (fastForwardIntervalRef.current) {
+      clearInterval(fastForwardIntervalRef.current);
+      fastForwardIntervalRef.current = null;
+    }
+
+    if (positionSaveTimerRef.current) {
+      clearInterval(positionSaveTimerRef.current);
+      positionSaveTimerRef.current = null;
+    }
+
+    if (bufferTimer.current) {
+      clearTimeout(bufferTimer.current);
+      bufferTimer.current = null;
+    }
+
+    // Add this to your cleanupResources function
+    if (hlsRef.current) {
+      hlsRef.current.off(Hls.Events.ERROR);
+      hlsRef.current.off(Hls.Events.MANIFEST_PARSED);
+      hlsRef.current.off(Hls.Events.FRAG_BUFFERED);
+      hlsRef.current.destroy();
+      hlsRef.current = null;
+    }
+
+    cleanupWatchTimer();
+  };
+
   // Initialize player when component mounts
   useEffect(() => {
     // initializePlayer();
@@ -4764,6 +4839,7 @@ const Player = ({
     initObserver.observe(container);
 
     return () => {
+      cleanupResources();
       initObserver.disconnect();
 
       clearTimeout(progressBarVisibilityTimer);

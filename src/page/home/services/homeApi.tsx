@@ -74,6 +74,13 @@ export const homeApi = createApi({
       query: ({ page }) =>
         convertToSecureUrl(`posts/list?pageSize=10&page=${page}`),
     }),
+    getMyday: builder.query({
+      query: ({ page }) => convertToSecureUrl(`users/myday?page=${page}`),
+    }),
+    getUserMyday: builder.query({
+      query: ({ post_user_id }) =>
+        convertToSecureUrl(`myday-list?post_user_id=${post_user_id}`),
+    }),
 
     getFollowedPosts: builder.query({
       query: ({ page }) =>
@@ -259,6 +266,8 @@ export const homeApi = createApi({
 });
 
 export const {
+  useGetUserMydayQuery,
+  useGetMydayQuery,
   useGetUserShareQuery,
   useFollowStatusMutation,
   useGetFollowedPostsQuery,

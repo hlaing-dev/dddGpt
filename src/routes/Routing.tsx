@@ -20,6 +20,7 @@ import SafeLazyLoad from "@/components/SafeLazyLoad";
 import CreatorNoti from "@/page/profile/noti/CreatorNoti";
 
 const Home = lazy(() => import("../page/home/Home"));
+const Detail = lazy(() => import("../page/home/components/Detail"));
 const Explore = lazy(() => import("../page/explore/Explore"));
 const Application = lazy(() => import("../page/application/Application"));
 const CreateCenter = lazy(() => import("../page/create-center/CreateCenter"));
@@ -264,6 +265,10 @@ const Routing = () => {
     {
       path: paths.video_detail,
       ...withErrorHandling(<VideoDetails />),
+    },
+    {
+      path: paths.detail,
+      ...withErrorHandling(<Detail />),
     },
     {
       path: paths.recycle,
