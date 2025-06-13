@@ -254,11 +254,7 @@ function VideoSidebar({
   }
 
   const handleProfile = (id: any) => {
-    if (post?.user?.my_day?.uploaded) {
-      navigate(`/story_detail/${id}`);
-    } else {
-      navigate(`/user/${id}`);
-    }
+    navigate(`/user/${id}`);
   };
 
   return (
@@ -307,30 +303,10 @@ function VideoSidebar({
             ) : (
               <>
                 {decryptedPhoto ? (
-                  post.user?.my_day?.uploaded ? (
-                    <div
-                      className="w-[57px] h-[57px] rounded-full p-[2px]"
-                      style={{
-                        background: !post.user?.my_day?.watched
-                          ? "linear-gradient(#16131C 0 0) padding-box, " +
-                            "linear-gradient(90deg, #e8b9ff 0%, #ff94b4 82.89%) border-box"
-                          : "linear-gradient(#16131C 0 0) padding-box, " +
-                            "rgba(255, 255, 255, 0.40) border-box",
-                        border: "2px solid transparent",
-                        padding: "3px",
-                      }}
-                    >
-                      <img
-                        src={decryptedPhoto}
-                        className="w-full h-full rounded-full object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <Avatar className="w-[40.25px] h-[40.25px]">
-                      <AvatarImage src={decryptedPhoto} />
-                      <AvatarFallback>SM</AvatarFallback>
-                    </Avatar>
-                  )
+                  <Avatar className="w-[40.25px] h-[40.25px]">
+                    <AvatarImage src={decryptedPhoto} />
+                    <AvatarFallback>SM</AvatarFallback>
+                  </Avatar>
                 ) : (
                   <Avatar className="w-[40.25px] p-3 bg-[#3a374d] flex justify-center items-center h-[40.25px] ">
                     <svg

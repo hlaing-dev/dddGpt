@@ -486,7 +486,7 @@ const VideoCard2 = ({ videoData, loadingVideoId, setLoadingVideoId }: any) => {
             transition: "opacity 1s ease",
           }}
         />
-        <ImageWithPlaceholder
+        {/* <ImageWithPlaceholder
           src={videoData?.preview_image}
           alt={videoData.title || "Video"}
           width={"100%"}
@@ -495,7 +495,7 @@ const VideoCard2 = ({ videoData, loadingVideoId, setLoadingVideoId }: any) => {
             videoData?.files[0]?.height
           )}
           className=" object-cover h-full w-full rounded-none"
-        />
+        /> */}
         {/* <div className="absolute card_style_2 bottom-0 flex justify-between items-center h-[50px] px-3 w-full">
           <div className="flex items-center gap-1">
             <Heart />

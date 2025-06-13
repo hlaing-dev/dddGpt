@@ -13,7 +13,9 @@ import Landing from "@/components/Landing";
 import { setPlay } from "@/page/home/services/playSlice";
 import UserFeed from "@/components/UserFeed";
 import AnimationLoader from "@/components/shared/animation-loader";
-import loadingAnimation from "@/lotties/Animation.json";
+import countdownAnimation from "@/lotties/Animation.json";
+import luckySpinAnimation from "@/lotties/SpinWheel.json";
+import fabAnimation from "@/lotties/welfare.json";
 import {
   useGetCurrentEventQuery,
   useLazyGetEventDetailsQuery,
@@ -33,6 +35,7 @@ import EventBox from "@/page/event/EventBox";
 import RegisterDrawer from "@/components/profile/auth/register-drawer";
 import { EventDetail } from "@/@types/lucky_draw";
 import DEventBox from "@/page/event/dragon/DEventBox";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Function to check if the app is running in a WebView
 function isWebView() {
@@ -73,6 +76,11 @@ const RootLayout = ({ children }: any) => {
   const user = useSelector((state: any) => state.persist.user);
   const currentTab = useSelector((state: any) => state.home.currentTab);
   const hideBar = useSelector((state: RootState) => state.hideBarSlice.hideBar);
+  const [showEvent, setShowEvent] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [showLuckySpin, setShowLuckySpin] = useState(false);
+  const [isIframeLoading, setIsIframeLoading] = useState(true);
+  const [preloadedIframe, setPreloadedIframe] = useState<HTMLIFrameElement | null>(null);
 
   const { data: eventData } = useGetUserByReferalQuery(
     { referral_code: referCode }, // or safely cast if you're confident it's a string
@@ -100,6 +108,7 @@ const RootLayout = ({ children }: any) => {
   );
 
   useEffect(() => {
+    console.log('currentEvent data is=>', currentEventData);
     if (showAd && showAlert && isOpen && !showLanding) {
       dispatch(setAnimation(false));
     } else {
@@ -289,6 +298,47 @@ const RootLayout = ({ children }: any) => {
     currentEventData?.data?.id,
   ]);
 
+  // Preload iframe content
+  useEffect(() => {
+    const preloadIframe = () => {
+      const iframe = document.createElement('iframe');
+      iframe.src = "http://localhost:5001";
+      iframe.style.display = 'none';
+      iframe.onload = () => {
+        setPreloadedIframe(iframe);
+      };
+      document.body.appendChild(iframe);
+    };
+
+    preloadIframe();
+
+    return () => {
+      if (preloadedIframe) {
+        document.body.removeChild(preloadedIframe);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        if (event?.data?.type === 'back_pressed') {
+          setShowLuckySpin(false);
+        }
+        if (event?.data?.type === 'navigate_to') {
+          navigate('wallet/withdraw');
+        }
+      } catch (error) {
+        console.error('Error handling message from iframe:', error);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, []);
+
   // If loading, show loading screen
   if (isLoading) {
     return <LoadingScreen onLoadComplete={handleLoadComplete} />;
@@ -299,6 +349,12 @@ const RootLayout = ({ children }: any) => {
     return <Landing onComplete={handleLandingComplete} />;
   }
   const handleAnimationClick = async () => {
+    if (!user?.token) {
+      dispatch(setIsDrawerOpen(true));
+      return;
+    }
+
+    console.log('currentEventData is=>', currentEventData);
     const eventId = currentEventData?.data?.id;
     if (!eventId) return;
 
@@ -338,87 +394,175 @@ const RootLayout = ({ children }: any) => {
     }
   };
 
-  return (
-    <div style={{ height: "calc(100dvh - 95px);" }}>
-      {children}
+  const handleLuckySpinClick = () => {
+    if (!user?.token) {
+      dispatch(setIsDrawerOpen(true));
+      return;
+    }
+    setShowLuckySpin(true);
+  };
 
-      {event && !box && !isOpenNew && !user && (
-        <DEventBox
-          setshownextBox={setshownextBox}
-          shownextBox={shownextBox}
-          eventData={eventData}
-          setBox={setBox}
-          referCode={referCode}
-          isOpen={isOpenNew}
-          setIsOpen={setIsOpenNew}
-          setCode={setCode}
-          newData={newData}
-          setnewData={setnewData}
-          setEvent={setEvent}
-        />
-      )}
-      {isOpenNew && (
-        <RegisterDrawer
-          isOpen={isOpenNew}
-          setIsOpen={setIsOpenNew}
-          code={referCode}
-          geetest_id={code}
-        />
-      )}
-
-      {showAd && !event && (
-        <PopUp
-          setShowAd={setShowAd}
-          setShowAlert={setShowAlert}
-          isBrowser={isBrowser}
-          onComplete={handleAdComplete}
-        />
-      )}
-      {!showAd && showAlert && isBrowser && jumpUrl && showDialog && !event && (
-        <AlertRedirect
-          event={event}
-          setShowAlert={setShowAlert}
-          app_download_link={jumpUrl}
-        />
-      )}
-      {isOpen ? <AuthDrawer /> : <></>}
-
-      <AlertToast />
-      <div className="fixed bottom-0 left-0 w-full z-[1600]">
-        <BottomNav />
-      </div>
-
-      {!showAd &&
-        // !showAlert &&
-        !isOpen &&
-        location.pathname === "/" &&
-        !event &&
-        showAnimation &&
-        currentTab === 2 &&
-        !hideBar &&
-        !userHasClosedAnimation && (
-          <div className="fixed bottom-[8rem] right-9 z-[9999] rounded-full p-2">
-            <div className="relative">
-              <button
-                className="absolute top-4 right-7 bg-white rounded-full w-5 h-5 flex items-center justify-center text-black z-[10000]"
-                onClick={() => {
-                  dispatch(setAnimation(false));
-                  setUserHasClosedAnimation(true);
-                  sessionStorage.setItem("animationClosed", "true");
-                }}
-              >
-                <img src={CloseSvg} />
-              </button>
-              <AnimationLoader
-                animationData={loadingAnimation}
-                width={120}
-                height={120}
-                onClick={handleAnimationClick}
-              />
-            </div>
+  if(showLuckySpin) {
+    const access_token = {type: 'access_token', data: {access_token: user.token}};
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage(access_token, 'http://fdsgfevbgg.qdhgtch.com:1777/');
+    }
+    return <>
+      <div className="h-screen w-screen fixed top-0 left-0 z-[9999]">
+        {isIframeLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
           </div>
         )}
-    </div>
+        <iframe
+          ref={iframeRef}
+          src="http://fdsgfevbgg.qdhgtch.com:1777/"
+          className="w-full h-full border-0"
+          title="Spin Game"
+          onLoad={() => setIsIframeLoading(false)}
+        />
+      </div>
+    </>
+  }
+  return (
+    <>
+      <div style={{ height: "calc(100dvh - 95px);" }}>
+        {children}
+
+        {event && !box && !isOpenNew && !user && (
+          <DEventBox
+            setshownextBox={setshownextBox}
+            shownextBox={shownextBox}
+            eventData={eventData}
+            setBox={setBox}
+            referCode={referCode}
+            isOpen={isOpenNew}
+            setIsOpen={setIsOpenNew}
+            setCode={setCode}
+            newData={newData}
+            setnewData={setnewData}
+            setEvent={setEvent}
+          />
+        )}
+        {isOpenNew && (
+          <RegisterDrawer
+            isOpen={isOpenNew}
+            setIsOpen={setIsOpenNew}
+            code={referCode}
+            geetest_id={code}
+          />
+        )}
+
+        {showAd && !event && (
+          <PopUp
+            setShowAd={setShowAd}
+            setShowAlert={setShowAlert}
+            isBrowser={isBrowser}
+            onComplete={handleAdComplete}
+          />
+        )}
+        {!showAd &&
+          showAlert &&
+          isBrowser &&
+          jumpUrl &&
+          showDialog &&
+          !event && (
+            <AlertRedirect
+              event={event}
+              setShowAlert={setShowAlert}
+              app_download_link={jumpUrl}
+            />
+          )}
+        {isOpen ? <AuthDrawer /> : <></>}
+
+        <AlertToast />
+        <div className="fixed bottom-0 left-0 w-full z-[1600]">
+          <BottomNav />
+        </div>
+
+        {!showAd &&
+          // !showAlert &&
+          !isOpen &&
+          location.pathname === "/" &&
+          !event &&
+          showAnimation &&
+          currentTab === 2 &&
+          !hideBar &&
+          !userHasClosedAnimation && (
+            <>
+              <AnimatePresence>
+                {showEvent && (
+                  <>
+                    <motion.div
+                      key="countdown"
+                      className="fixed bottom-[22rem] left-2 z-[9999] rounded-full p-2"
+                      initial={{ y: 100, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={{ y: 100, opacity: 0 }}
+                      transition={{
+                        type: "spring",
+                        damping: 20,
+                        stiffness: 300,
+                      }}
+                    >
+                      <div className="relative">
+                        <AnimationLoader
+                          animationData={countdownAnimation}
+                          width={110}
+                          onClick={handleAnimationClick}
+                        />
+                      </div>
+                    </motion.div>
+
+                    <motion.div
+                      key="luckySpin"
+                      className="fixed bottom-[19rem] left-4 z-[9999] rounded-full p-2"
+                      initial={{ y: 100, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={{ y: 100, opacity: 0 }}
+                      transition={{
+                        type: "spring",
+                        damping: 20,
+                        stiffness: 300,
+                        delay: 0.1,
+                      }}
+                    >
+                      <div className="relative">
+                        <AnimationLoader
+                          animationData={luckySpinAnimation}
+                          width={85}
+                          height={100}
+                          onClick={handleLuckySpinClick}
+                        />
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+              <div className="fixed bottom-[12rem] left-1 z-[9999] rounded-full p-2">
+                <div className="relative">
+                  <button
+                    className="absolute top-1 right-2 bg-red rounded-full w-5 h-5 flex items-center justify-center text-black z-[10000]"
+                    onClick={() => {
+                      dispatch(setAnimation(false));
+                      setUserHasClosedAnimation(true);
+                      sessionStorage.setItem("animationClosed", "true");
+                    }}
+                  >
+                    <img src={CloseSvg} />
+                  </button>
+                  <AnimationLoader
+                    animationData={fabAnimation}
+                    width={100}
+                    height={100}
+                    onClick={() => setShowEvent(!showEvent)}
+                  />
+                </div>
+              </div>
+            </>
+          )}
+      </div>
+    </>
   );
 };
 

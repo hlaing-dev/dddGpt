@@ -1,5 +1,7 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { useGetUserProfileQuery } from "@/store/api/profileApi";
+import {
+  useGetUserProfileQuery,
+} from "@/store/api/profileApi";
 import { useGetUserShareQuery } from "@/page/home/services/homeApi";
 import { ChevronLeft, Copy, Flag } from "lucide-react";
 import ProfileAvatar from "@/components/profile/profile-avatar";
@@ -20,11 +22,7 @@ import SearchVideo from "@/components/profile/video/search-video";
 import OtherAds from "@/components/profile/other-ads";
 import logo from "@/assets/logo.svg";
 
-const decryptImage = (
-  arrayBuffer: ArrayBuffer,
-  key = 0x12,
-  decryptSize = 4096
-) => {
+const decryptImage = (arrayBuffer: ArrayBuffer, key = 0x12, decryptSize = 4096) => {
   const data = new Uint8Array(arrayBuffer);
   const maxSize = Math.min(decryptSize, data.length);
   for (let i = 0; i < maxSize; i++) {
@@ -67,8 +65,8 @@ const OtherProfile = () => {
     refetch,
   } = useGetUserProfileQuery(id || "");
   // console.log(userData)
-  const code = userData?.data?.user_code ? userData?.data?.user_code : "";
-  console.log(code);
+  const code = userData?.data?.user_code ? userData?.data?.user_code : ""
+  console.log(code)
   const { data: shareData } = useGetUserShareQuery(
     {
       type: "profile",
@@ -80,15 +78,13 @@ const OtherProfile = () => {
   // console.log(shareData, "share data");
   const [decryptedCover, setDecryptedCover] = useState(defaultCover);
   const [decryptedPhoto, setDecryptedPhoto] = useState("");
-  const [cachedDownloadLink, setCachedDownloadLink] = useState<string | null>(
-    null
-  );
+  const [cachedDownloadLink, setCachedDownloadLink] = useState<string | null>(null);
 
   useEffect(() => {
     if (shareData?.data?.link) {
       setCachedDownloadLink(shareData?.data?.content);
     }
-  }, [shareData, code]);
+  }, [shareData,code]);
 
   useEffect(() => {
     const loadAndDecryptCover = async () => {
@@ -170,7 +166,7 @@ const OtherProfile = () => {
         console.error("Failed to copy text: ", err);
       });
   };
-
+  
   const isIOSApp = () => {
     const customWindow = window as unknown as CustomWindow;
     return (
@@ -179,7 +175,7 @@ const OtherProfile = () => {
       customWindow.webkit.messageHandlers.jsBridge
     );
   };
-
+  
   const sendEventToNative = (name: string, text: string) => {
     const customWindow = window as unknown as CustomWindow;
     if (
@@ -193,7 +189,7 @@ const OtherProfile = () => {
       });
     }
   };
-
+  
   const handleCopy2 = async () => {
     // If we already have a cached link, use it
     if (cachedDownloadLink) {
@@ -269,7 +265,7 @@ const OtherProfile = () => {
     return (
       <div className="h-screen flex flex-col items-center justify-center">
         <p>User not found or content is unavailable.</p>
-        <button
+        <button 
           className="mt-4 bg-[#FFFFFF1F] px-4 py-2 rounded-lg"
           onClick={() => navigate(-1)}
         >
@@ -367,8 +363,6 @@ const OtherProfile = () => {
         </div>
         <div className="w-full flex items-center gap-3 pb-5 px-3">
           <ProfileAvatar
-            id={userData?.data?.id}
-            myday={userData?.data?.myday}
             progressData={userData?.data?.level_progress}
             levelImage={userData?.data?.level}
             photo={decryptedPhoto}

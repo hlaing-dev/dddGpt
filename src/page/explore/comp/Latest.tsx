@@ -852,9 +852,6 @@ interface LatestPorp {
   exp_header: any;
   page: any;
   setPage: any;
-  data?: any;
-  isLoading?: boolean;
-  hasMore?: boolean;
 }
 
 const Latest: React.FC<LatestPorp> = ({
@@ -866,13 +863,10 @@ const Latest: React.FC<LatestPorp> = ({
   exp_header,
   page,
   setPage,
-  data,
-  isLoading,
-  hasMore,
 }) => {
   const dispatch = useDispatch();
-
-  // const { data, isLoading } = useGetExploreListQuery({ id: list_id, page });
+  const [hasMore, setHasMore] = useState(true);
+  const { data, isLoading } = useGetExploreListQuery({ id: list_id, page });
   const navigate = useNavigate();
   const scrollPositionRef = useRef<number>(0);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -924,20 +918,20 @@ const Latest: React.FC<LatestPorp> = ({
     }
   }, []);
 
-  // useEffect(() => {
-  //   setWaterFall([]); // Reset list when switching tabs
-  // }, [exp_header]);
+  useEffect(() => {
+    setWaterFall([]); // Reset list when switching tabs
+  }, [exp_header]);
 
-  // useEffect(() => {
-  //   if (data?.data) {
-  //     setWaterFall((prev: any) => [...prev, ...data.data]);
-  //     const loadedItems =
-  //       data?.pagination?.current_page * data?.pagination?.per_page;
-  //     setHasMore(loadedItems < data?.pagination?.total);
-  //   } else {
-  //     setHasMore(false);
-  //   }
-  // }, [data, exp_header]);
+  useEffect(() => {
+    if (data?.data) {
+      setWaterFall((prev: any) => [...prev, ...data.data]);
+      const loadedItems =
+        data?.pagination?.current_page * data?.pagination?.per_page;
+      setHasMore(loadedItems < data?.pagination?.total);
+    } else {
+      setHasMore(false);
+    }
+  }, [data, exp_header]);
 
   const formatNumber = (num: number) => {
     if (num >= 1000) {
