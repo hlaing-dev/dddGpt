@@ -120,7 +120,7 @@ const RootLayout = ({ children }: any) => {
 
   useEffect(() => {
     // dev
-    // const webUrl = "http://192.168.100.105:5001/";
+    // const webUrl = "http://192.168.1.163:5001/";
     // const webUrl = 'https://bespoke-piroshki-8ed2b8.netlify.app/';
     // prod
     const webUrl = currentEventData?.data.filter((x: any) => x.type === 'spin-wheel')[0]?.web_url;
@@ -564,7 +564,8 @@ const RootLayout = ({ children }: any) => {
         {!showAd &&
           // !showAlert &&
           !isOpen &&
-          location.pathname === "/" &&
+          (location.pathname === "/" ||
+          location.pathname === "/detail") &&
           !event &&
           showAnimation &&
           currentTab === 2 &&
