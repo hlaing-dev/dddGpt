@@ -79,9 +79,6 @@ const RootLayout = ({ children }: any) => {
   const [showEvent, setShowEvent] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [showLuckySpin, setShowLuckySpin] = useState(false);
-  const [isIframeLoading, setIsIframeLoading] = useState(true);
-  const [preloadedIframe, setPreloadedIframe] =
-    useState<HTMLIFrameElement | null>(null);
   const [luckySpinWebUrl, setLuckySpinWebUrl] = useState('');
   const { data: eventData } = useGetUserByReferalQuery(
     { referral_code: referCode }, // or safely cast if you're confident it's a string
@@ -306,43 +303,26 @@ const RootLayout = ({ children }: any) => {
     currentEventData?.data?.id,
   ]);
 
-  // Preload iframe content
-  useEffect(() => {
-    const preloadIframe = () => {
-      const iframe = document.createElement("iframe");
-      iframe.src = luckySpinWebUrl;
-      iframe.style.display = "none";
-      iframe.onload = () => {
-        setPreloadedIframe(iframe);
-      };
-      document.body.appendChild(iframe);
-    };
-
-    preloadIframe();
-
-    return () => {
-      if (preloadedIframe) {
-        document.body.removeChild(preloadedIframe);
-      }
-    };
-  }, []);
-
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       try {
         if (event?.data?.type === "back_pressed") {
           setShowLuckySpin(false);
-          localStorage.removeItem("showLuckySpin");
+          sessionStorage.removeItem("showLuckySpin");
+          return;
         }
         if (event?.data?.type === "withdraw") {
           navigate("wallet/withdraw");
           localStorage.setItem("showLuckySpin", "true");
+          return;
         }
         if (event?.data?.type === "red_envelope") {
           // navigate("wallet/withdraw");
           handleAnimationClick();
           localStorage.setItem("showLuckySpin", "true");
+          return;
         }
+        sessionStorage.setItem("showLuckySpin", "false");
       } catch (error) {
         console.error("Error handling message from iframe:", error);
       }
@@ -357,7 +337,7 @@ const RootLayout = ({ children }: any) => {
   // Check localStorage on component mount and route changes
   useEffect(() => {
     const shouldShowLuckySpin =
-      localStorage.getItem("showLuckySpin") === "true";
+      sessionStorage.getItem("showLuckySpin") === "true";
     if (shouldShowLuckySpin) {
       setShowLuckySpin(true);
     }
@@ -419,46 +399,44 @@ const RootLayout = ({ children }: any) => {
   };
 
   const handleLuckySpinClick = () => {
-    if (!user?.token) {
-      dispatch(setPlay(false));
-      dispatch(setIsDrawerOpen(true));
-      return;
-    }
+    // if (!user?.token) {
+    //   dispatch(setPlay(false));
+    //   dispatch(setIsDrawerOpen(true));
+    //   return;
+    // }
+    dispatch(setPlay(false));
     setShowLuckySpin(true);
-    localStorage.setItem("showLuckySpin", "true");
   };
 
+
   if (showLuckySpin) {
-    const access_token = {
-      type: "access_token",
-      data: { access_token: user.token },
-    };
-    console.log('access_token is=>', access_token);
-    if (iframeRef.current?.contentWindow) {
-      iframeRef.current.contentWindow.postMessage(
-        access_token,
-        luckySpinWebUrl
-      );
+    if(user?.token) {
+      const access_token = {
+        type: "access_token",
+        data: { access_token: user?.token },
+      };
+      console.log('access_token is=>', access_token);
+      if (iframeRef.current?.contentWindow) {
+        iframeRef.current.contentWindow.postMessage(
+          access_token,
+          luckySpinWebUrl
+        );
+      }
     }
-    return (
-      <>
-        <div className="h-dvh w-screen fixed top-0 left-0 z-[9999]">
-          {/* {isIframeLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-            </div>
-          )} */}
-          <iframe
-            ref={iframeRef}
-            src={luckySpinWebUrl}
-            // src="http://localhost:5001"
-            className="w-full h-full border-0"
-            title="Spin Game"
-            onLoad={() => setIsIframeLoading(false)}
-          />
-        </div>
-      </>
-    );
+    // return (
+    //   <>
+    //     <div className="h-dvh w-screen fixed top-0 left-0 z-[9999]">
+    //       <iframe
+    //         ref={iframeRef}
+    //         src={luckySpinWebUrl}
+    //         className="w-full h-full border-0"
+    //         style={{ display: showLuckySpin ? 'block' : 'none' }}
+    //         title="Spin Game"
+    //         onLoad={() => setIsIframeLoading(false)}
+    //       />
+    //     </div>
+    //   </>
+    // );
   }
   return (
     <>
@@ -597,6 +575,16 @@ const RootLayout = ({ children }: any) => {
               </div>
             </>
           )}
+          <div className="h-dvh w-screen fixed top-0 left-0 z-[9999]"
+          style={{ display: showLuckySpin ? 'block' : 'none' }}>
+          <iframe
+            ref={iframeRef}
+            src={luckySpinWebUrl}
+            className="w-full h-full border-0"
+            style={{ display: showLuckySpin ? 'block' : 'none' }}
+            title="Spin Game"
+          />
+        </div>
       </div>
     </>
   );
