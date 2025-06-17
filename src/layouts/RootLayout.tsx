@@ -48,9 +48,6 @@ function isWebView() {
 }
 
 const RootLayout = ({ children }: any) => {
-  const { showLuckySpin, openLuckySpin, closeLuckySpin } =
-    useLuckySpinManager();
-
   const [showAd, setShowAd] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [isBrowser, setIsBrowser] = useState(false);
@@ -109,12 +106,24 @@ const RootLayout = ({ children }: any) => {
     (state: RootState) => state.event.event_start_time
   );
 
+  const isOpen = useSelector((state: any) => state.profile.isDrawerOpen);
+
+  const [cachedEventDetails, setCachedEventDetails] = useState<{
+    data: EventDetail;
+  } | null>(null);
+  const [isFetchingDetails, setIsFetchingDetails] = useState(false);
+  const { showLuckySpin, openLuckySpin, closeLuckySpin } =
+    useLuckySpinManager();
+  const isFetchingRef = useRef(false);
+
+  console.log("currentEventData is=>", luckySpinWebUrl);
+
   useEffect(() => {
     // dev
-    // const webUrl = "http://192.168.1.163:5001/";
-    const webUrl = 'https://bespoke-piroshki-8ed2b8.netlify.app/';
+    // const webUrl = "http://192.168.100.105:5001/";
+    // const webUrl = 'https://bespoke-piroshki-8ed2b8.netlify.app/';
     // prod
-    // const webUrl = currentEventData?.data.filter((x: any) => x.type === 'spin-wheel')[0]?.web_url;
+    const webUrl = currentEventData?.data.filter((x: any) => x.type === 'spin-wheel')[0]?.web_url;
     setLuckySpinWebUrl(webUrl);
     if (showAd && showAlert && isOpen && !showLanding) {
       dispatch(setAnimation(false));
@@ -250,14 +259,6 @@ const RootLayout = ({ children }: any) => {
     }
   }, [event]);
 
-  const isOpen = useSelector((state: any) => state.profile.isDrawerOpen);
-
-  const [cachedEventDetails, setCachedEventDetails] = useState<{
-    data: EventDetail;
-  } | null>(null);
-  const [isFetchingDetails, setIsFetchingDetails] = useState(false);
-  const isFetchingRef = useRef(false);
-
   // Preload the lucky draw component and prefetch event details
   useEffect(() => {
     const shouldPreload =
@@ -329,6 +330,11 @@ const RootLayout = ({ children }: any) => {
           localStorage.setItem("showLuckySpin", "true");
           return;
         }
+        if (event?.data?.type === "login") {
+          console.log("Login message received from iframe");
+          dispatch(setIsDrawerOpen(true));
+          return;
+        }
         sessionStorage.setItem("showLuckySpin", "false");
       } catch (error) {
         console.error("Error handling message from iframe:", error);
@@ -349,15 +355,6 @@ const RootLayout = ({ children }: any) => {
   //   }
   // }, [location.pathname]);
 
-  // If loading, show loading screen
-  if (isLoading) {
-    return <LoadingScreen onLoadComplete={handleLoadComplete} />;
-  }
-
-  // After loading, show Landing
-  if (showLanding) {
-    return <Landing onComplete={handleLandingComplete} />;
-  }
   const handleAnimationClick = async () => {
     // if (!user?.token) {
     //   dispatch(setIsDrawerOpen(true));
@@ -448,38 +445,70 @@ const RootLayout = ({ children }: any) => {
     // sessionStorage.setItem("showLuckySpin", "true");
   };
 
-  if (showLuckySpin) {
-    if (user?.token) {
-      const access_token = {
-        type: "access_token",
-        data: { access_token: user?.token },
-      };
-      console.log("access_token is=>", access_token);
-      if (iframeRef.current?.contentWindow) {
-        iframeRef.current.contentWindow.postMessage(
-          access_token,
-          luckySpinWebUrl
-        );
+  // const sendTokenEvent = () => {
+  //   console.log("sendTokenEvent called with user token:", user?.token);
+  //   if (user?.token) {
+  //     console.log("winn");
+  //     const access_token = {
+  //       type: "access_token",
+  //       data: { access_token: user?.token },
+  //     };
+  //     if (iframeRef.current?.contentWindow) {
+  //       iframeRef.current.contentWindow.postMessage(
+  //         access_token,
+  //         luckySpinWebUrl
+  //       );
+  //     }
+  //   }
+  // };
+
+  // Remove the eslint-disable comment and fix the hook
+  useEffect(() => {
+    const sendTokenEvent = () => {
+      if (user?.token && showLuckySpin) {
+        const access_token = {
+          type: "access_token",
+          data: { access_token: user?.token },
+        };
+        if (iframeRef.current?.contentWindow) {
+          iframeRef.current.contentWindow.postMessage(
+            access_token,
+            luckySpinWebUrl
+          );
+        }
       }
-    }
-    // return (
-    //   <>
-    //     <div className="h-dvh w-screen fixed top-0 left-0 z-[9999]">
-    //       <iframe
-    //         ref={iframeRef}
-    //         src={luckySpinWebUrl}
-    //         className="w-full h-full border-0"
-    //         style={{ display: showLuckySpin ? 'block' : 'none' }}
-    //         title="Spin Game"
-    //         onLoad={() => setIsIframeLoading(false)}
-    //       />
-    //     </div>
-    //   </>
-    // );
+    };
+
+    sendTokenEvent();
+  }, [user?.token, showLuckySpin]);
+
+  // // eslint-disable-next-line react-hooks/rules-of-hooks
+  // useEffect(() => {
+  //   sendTokenEvent();
+  // }, [user?.token]);
+
+  // if (showLuckySpin) {
+  //   sendTokenEvent();
+  // }
+
+  // If loading, show loading screen
+  if (isLoading) {
+    return <LoadingScreen onLoadComplete={handleLoadComplete} />;
   }
+
+  // After loading, show Landing
+  if (showLanding) {
+    return <Landing onComplete={handleLandingComplete} />;
+  }
+
   return (
     <>
-      <div style={{ height: "calc(100dvh - 95px);", display: !showLuckySpin ? "block" : "none" }}>
+      <div
+        style={{
+          height: "calc(100dvh - 95px);",
+          display: !showLuckySpin ? "block" : "none",
+        }}
+      >
         {children}
 
         {event && !box && !isOpenNew && !user && (
@@ -526,7 +555,6 @@ const RootLayout = ({ children }: any) => {
               app_download_link={jumpUrl}
             />
           )}
-        {isOpen ? <AuthDrawer /> : <></>}
 
         <AlertToast />
         <div className="fixed bottom-0 left-0 w-full z-[1600]">
@@ -615,18 +643,20 @@ const RootLayout = ({ children }: any) => {
             </>
           )}
       </div>
+      {isOpen ? <AuthDrawer /> : <></>}
       <div
-          className="h-dvh w-screen fixed top-0 left-0 z-[9999]"
+        className="h-dvh w-screen fixed top-0 left-0 z-[999]"
+        style={{ display: showLuckySpin ? "block" : "none" }}
+      >
+        <iframe
+          ref={iframeRef}
+          src={luckySpinWebUrl}
+          className="w-full h-full border-0"
           style={{ display: showLuckySpin ? "block" : "none" }}
-        >
-          <iframe
-            ref={iframeRef}
-            src={luckySpinWebUrl}
-            className="w-full h-full border-0"
-            style={{ display: showLuckySpin ? "block" : "none" }}
-            title="Spin Game"
-          />
-        </div>
+          title="Spin Game"
+        />
+        {/* {/* {isOpen ? <AuthDrawer /> : <></>} */}
+      </div>
     </>
   );
 };
