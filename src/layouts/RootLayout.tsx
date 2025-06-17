@@ -36,6 +36,7 @@ import RegisterDrawer from "@/components/profile/auth/register-drawer";
 import { EventDetail } from "@/@types/lucky_draw";
 import DEventBox from "@/page/event/dragon/DEventBox";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLuckySpinManager } from "./useLuckySpinManager";
 
 // Function to check if the app is running in a WebView
 function isWebView() {
@@ -47,6 +48,9 @@ function isWebView() {
 }
 
 const RootLayout = ({ children }: any) => {
+  const { showLuckySpin, openLuckySpin, closeLuckySpin } =
+    useLuckySpinManager();
+
   const [showAd, setShowAd] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [isBrowser, setIsBrowser] = useState(false);
@@ -78,8 +82,8 @@ const RootLayout = ({ children }: any) => {
   const hideBar = useSelector((state: RootState) => state.hideBarSlice.hideBar);
   const [showEvent, setShowEvent] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [showLuckySpin, setShowLuckySpin] = useState(false);
-  const [luckySpinWebUrl, setLuckySpinWebUrl] = useState('');
+  // const [showLuckySpin, setShowLuckySpin] = useState(false);
+  const [luckySpinWebUrl, setLuckySpinWebUrl] = useState("");
   const { data: eventData } = useGetUserByReferalQuery(
     { referral_code: referCode }, // or safely cast if you're confident it's a string
     { skip: !referCode }
@@ -107,7 +111,8 @@ const RootLayout = ({ children }: any) => {
 
   useEffect(() => {
     // dev
-    // const webUrl = "http://localhost:5001";
+    // const webUrl = "http://192.168.1.163:5001/";
+    // const webUrl = 'https://transcendent-kulfi-f090a3.netlify.app/';
     // prod
     const webUrl = currentEventData?.data.filter((x: any) => x.type === 'spin-wheel')[0]?.web_url;
     setLuckySpinWebUrl(webUrl);
@@ -279,7 +284,7 @@ const RootLayout = ({ children }: any) => {
           isFetchingRef.current = true;
           setIsFetchingDetails(true);
           const eventDetails = await triggerGetEventDetails(eventId).unwrap();
-          console.log('eventDetails is=>', eventDetails);
+          console.log("eventDetails is=>", eventDetails);
           setCachedEventDetails(eventDetails);
           // Don't dispatch to Redux yet, wait for click
         } catch (error) {
@@ -307,8 +312,10 @@ const RootLayout = ({ children }: any) => {
     const handleMessage = (event: MessageEvent) => {
       try {
         if (event?.data?.type === "back_pressed") {
-          setShowLuckySpin(false);
-          sessionStorage.removeItem("showLuckySpin");
+          closeLuckySpin();
+          // window.history.pushState("", "/");
+          // setShowLuckySpin(false);
+          // sessionStorage.removeItem("showLuckySpin");
           return;
         }
         if (event?.data?.type === "withdraw") {
@@ -334,14 +341,13 @@ const RootLayout = ({ children }: any) => {
     };
   }, []);
 
-  // Check localStorage on component mount and route changes
-  useEffect(() => {
-    const shouldShowLuckySpin =
-      sessionStorage.getItem("showLuckySpin") === "true";
-    if (shouldShowLuckySpin) {
-      setShowLuckySpin(true);
-    }
-  }, [location.pathname]);
+  // useEffect(() => {
+  //   const shouldShowLuckySpin =
+  //     sessionStorage.getItem("showLuckySpin") === "true";
+  //   if (shouldShowLuckySpin) {
+  //     setShowLuckySpin(true);
+  //   }
+  // }, [location.pathname]);
 
   // If loading, show loading screen
   if (isLoading) {
@@ -353,10 +359,10 @@ const RootLayout = ({ children }: any) => {
     return <Landing onComplete={handleLandingComplete} />;
   }
   const handleAnimationClick = async () => {
-    if (!user?.token) {
-      dispatch(setIsDrawerOpen(true));
-      return;
-    }
+    // if (!user?.token) {
+    //   dispatch(setIsDrawerOpen(true));
+    //   return;
+    // }
     const eventId = currentEventData?.data?.filter(
       (x: any) => x.type === "event"
     )[0]?.id;
@@ -398,24 +404,57 @@ const RootLayout = ({ children }: any) => {
     }
   };
 
+  // useEffect(() => {
+  //   if (location.pathname !== "/detail") {
+  //     setShowLuckySpin(false);
+  //     sessionStorage.removeItem("showLuckySpin");
+  //   }
+  // }, [location.pathname]);
+
+  // useEffect(() => {
+  //   const handleBackNavigation = () => {
+  //     // When user goes back, check if we should hide the lucky spin
+  //     if (showLuckySpin) {
+  //       window.history.pushState("", "/");
+  //       window.history.back();
+  //       setShowLuckySpin(false);
+  //       sessionStorage.removeItem("showLuckySpin");
+  //     }
+  //   };
+
+  //   // Add event listener for popstate (triggered by back navigation)
+  //   window.addEventListener("popstate", handleBackNavigation);
+
+  //   // Clean up the event listener when component unmounts
+  //   return () => {
+  //     window.removeEventListener("popstate", handleBackNavigation);
+  //   };
+  // }, [showLuckySpin]);
+
   const handleLuckySpinClick = () => {
     // if (!user?.token) {
     //   dispatch(setPlay(false));
     //   dispatch(setIsDrawerOpen(true));
     //   return;
     // }
-    dispatch(setPlay(false));
-    setShowLuckySpin(true);
+    // dispatch(setPlay(false));
+    // window.history.pushState({ fake: true }, "", "/detail");
+    // setShowLuckySpin(true);
+    // dispatch(setPlay(false));
+    openLuckySpin();
+    // Push a new state to history when opening the lucky spin
+    // window.history.pushState({ showLuckySpin: true }, "", "/detail");
+    // // setShowLuckySpin(true);
+    // sessionStorage.setItem("showLuckySpin", "true");
   };
 
-
   if (showLuckySpin) {
-    if(user?.token) {
+    if (user?.token) {
       const access_token = {
         type: "access_token",
         data: { access_token: user?.token },
       };
-      console.log('access_token is=>', access_token);
+      console.log("access_token is=>", access_token);
       if (iframeRef.current?.contentWindow) {
         iframeRef.current.contentWindow.postMessage(
           access_token,
@@ -440,7 +479,7 @@ const RootLayout = ({ children }: any) => {
   }
   return (
     <>
-      <div style={{ height: "calc(100dvh - 95px);" }}>
+      <div style={{ height: "calc(100dvh - 95px);", display: !showLuckySpin ? "block" : "none" }}>
         {children}
 
         {event && !box && !isOpenNew && !user && (
@@ -575,17 +614,19 @@ const RootLayout = ({ children }: any) => {
               </div>
             </>
           )}
-          <div className="h-dvh w-screen fixed top-0 left-0 z-[9999]"
-          style={{ display: showLuckySpin ? 'block' : 'none' }}>
+      </div>
+      <div
+          className="h-dvh w-screen fixed top-0 left-0 z-[9999]"
+          style={{ display: showLuckySpin ? "block" : "none" }}
+        >
           <iframe
             ref={iframeRef}
             src={luckySpinWebUrl}
             className="w-full h-full border-0"
-            style={{ display: showLuckySpin ? 'block' : 'none' }}
+            style={{ display: showLuckySpin ? "block" : "none" }}
             title="Spin Game"
           />
         </div>
-      </div>
     </>
   );
 };
