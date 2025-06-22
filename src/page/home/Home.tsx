@@ -43,7 +43,8 @@ import Followers from "./components/Followers";
 import DetailStory from "./components/DetailStory";
 import follow_title from "../../assets/follow_title.png";
 import follow_img from "../../assets/follow_img.png";
-import follower_login from '../../assets/follower_login.webp';
+import follower_login from "../../assets/follower_login.webp";
+import { combineSlices } from "@reduxjs/toolkit";
 
 const Home = () => {
   const videoContainerRef = useRef<HTMLDivElement>(null);
@@ -466,11 +467,15 @@ const Home = () => {
   const [followers, setFollowers] = useState<any[]>([]);
   const [showFollowers, setShowFollowers] = useState(false);
   const { data: myday } = useGetMydayQuery({ page: 1 });
+  const [scrollDirection, setScrollDirection] = useState<"up" | "down" | null>(
+    null
+  );
+  const [lastScrollTop, setLastScrollTop] = useState(0);
 
+  // Load and decrypt followers
   useEffect(() => {
     if (myday?.data.length > 0) {
-      setIsDecrypting(true);
-
+      // setIsDecrypting(true);
       try {
         const decryptAndUpdateVideos = async () => {
           const decryptedVideos = await Promise.all(
@@ -480,24 +485,65 @@ const Home = () => {
             }))
           );
           setFollowers(decryptedVideos);
-          setIsDecrypting(false);
+          // setIsDecrypting(false);
         };
         decryptAndUpdateVideos();
       } catch (error) {
-        setIsDecrypting(false);
+        // setIsDecrypting(false);
       }
     } else {
-      setIsDecrypting(false);
+      // setIsDecrypting(false);
     }
   }, [myday]);
 
+  // Scroll handler for showing/hiding followers
+  useEffect(() => {
+    const container = videoContainerRef.current;
+
+    if (!container) return;
+
+    const handleScroll = () => {
+      const scrollTop = container.scrollTop;
+
+      // Determine scroll direction
+      if (scrollTop > lastScrollTop) {
+        setScrollDirection("down");
+      } else if (scrollTop < lastScrollTop) {
+        setScrollDirection("up");
+      }
+      setLastScrollTop(scrollTop);
+
+      // Show followers when scrolling up at the very top
+      if (scrollTop <= 0 && scrollDirection === "up") {
+        setShowFollowers(true);
+      }
+
+      // Hide followers when scrolling down past threshold
+      if (scrollTop > 100 && showFollowers) {
+        setShowFollowers(false);
+      }
+    };
+
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [
+    lastScrollTop,
+    scrollDirection,
+    showFollowers,
+    videoContainerRef.current,
+  ]);
+
   const handleShow = () => {
     setShowFollowers(!showFollowers);
+    // if (!showFollowers) {
+    //   // When showing followers, scroll to top
+    //   videoContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    // }
   };
 
   if (show) {
     return (
-      <div className="fixed inset-0 top-0 left-0 z-[9999] flex items-center justify-center">
+      <div className="fixed inset-0 top-0 left-0 z-[9999]">
         <DetailStory id={show} />
       </div>
     );
@@ -603,7 +649,7 @@ const Home = () => {
                       ref={videoContainerRef}
                       className={`app__videos pb-[80px]  overflow-hidden 
                                   transition-all duration-300 ease-in-out transform ${
-                                    showFollowers ? "mt-[370px]" : "mt-0"
+                                    showFollowers ? "mt-[400px]" : "mt-0"
                                   }`}
                     >
                       {videos["follow"]?.map((video: any, index: any) => {
@@ -725,11 +771,24 @@ const Home = () => {
                     )}
                   </>
                 ) : (
-                  <div className="app_home bg-[#16131C]">
-                    <div style={{ textAlign: "center", padding: "20px" }}>
-                      <div className="text-white flex flex-col justify-center items-center  gap-2">
-                          <img src={follower_login} alt="followerImg" className="max-w-[80%]" />
-                      </div>
+                  <div className="flex justify-center flex-col items-center h-full">
+                    <h1 className="follow_no_h">热门顶尖创作者</h1>
+                    <p className="follow_no_p">
+                      关注热门账号，观看他们的最新视频
+                    </p>
+                    <div className="follow_bg h-[300px] flex flex-col items-center w-[240px]">
+                      <img
+                        src={follow_title}
+                        alt=""
+                        className="mt-7 w-[128px]"
+                      />
+                      <img src={follow_img} alt="" className="mt-5 px-5" />
+                      <p className="follow_re_text mt-5">
+                        创作者成为闪亮之星，从创作者开始
+                      </p>
+                      <Link to={"/ranking"} className="follow_re_btn mt-5">
+                        查看全部
+                      </Link>
                     </div>
                   </div>
                 ))}

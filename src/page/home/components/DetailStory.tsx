@@ -15,8 +15,15 @@ import DetailContainer from "./detail/DetailContainer";
 
 // Swiper imports
 import { Swiper, SwiperSlide } from "swiper/react";
+
+import { EffectCube } from "swiper/modules";
 // @ts-expect-error: Swiper CSS has no type declarations but is required for styling
 import "swiper/css";
+// import "swiper/css/effect-cube";
+import { useDispatch, useSelector } from "react-redux";
+import { setWatchedPost } from "../services/watchSlice";
+import { setCurrentVideoIndex } from "../services/indexSlice";
+import { useVideoIndices } from "./useVideoIndices";
 
 interface User {
   id: string;
@@ -42,6 +49,9 @@ const DetailStory = ({ id }: { id: string }) => {
   const { data: myday } = useGetMydayQuery({ page: 1 });
   const [watchPost] = useWatchtPostMutation();
   const videoContainerRef = useRef<HTMLDivElement>(null);
+  const [isInteractingWithProgressBar, setisInteractingWithProgressBar] =
+    useState(false);
+  const swiperRef = useRef<any>(null);
 
   // Get all users with posts
   const usersWithPosts: User[] =
@@ -61,12 +71,20 @@ const DetailStory = ({ id }: { id: string }) => {
   const [isDecryptingMap, setIsDecryptingMap] = useState<
     Record<string, boolean>
   >({});
-  const [currentVideoIndexMap, setCurrentVideoIndexMap] = useState<
-    Record<string, number>
-  >({});
-  const [watchedPostsMap, setWatchedPostsMap] = useState<
-    Record<string, Record<string, boolean>>
-  >({});
+  // Get from Redux instead of local state
+
+  const { currentVideoIndexMap, setCurrentIndex } = useVideoIndices();
+  // const [currentVideoIndexMap, setCurrentVideoIndexMap] = useState<
+  //   Record<string, number>
+  // >({});
+  // const [watchedPostsMap, setWatchedPostsMap] = useState<
+  //   Record<string, Record<string, boolean>>
+  // >({});
+  const watchedPostsMap = useSelector(
+    (state: any) => state.watchSlice.watchedPostsMap
+  );
+  const dispatch = useDispatch();
+
   const [heartsMap, setHeartsMap] = useState<Record<string, number[]>>({});
   const [widthMap, setWidthMap] = useState<Record<string, number>>({});
   const [heightMap, setHeightMap] = useState<Record<string, number>>({});
@@ -112,7 +130,31 @@ const DetailStory = ({ id }: { id: string }) => {
         ).then((decrypted) => {
           setDecryptedVideosMap((prev) => ({ ...prev, [user.id]: decrypted }));
           setIsDecryptingMap((prev) => ({ ...prev, [user.id]: false }));
-          setCurrentVideoIndexMap((prev) => ({ ...prev, [user.id]: 0 }));
+
+          // // Find the first unwatched video or default to 0
+          const firstUnwatchedIndex = decrypted.findIndex(
+            (video: any) => !video.is_watched
+          );
+          const newIndex = firstUnwatchedIndex >= 0 ? firstUnwatchedIndex : 0;
+
+          if (currentVideoIndexMap[user.id]) {
+            if (newIndex > currentVideoIndexMap[user.id]) {
+              dispatch(
+                setCurrentVideoIndex({ userId: user.id, index: newIndex })
+              );
+            } else {
+              dispatch(
+                setCurrentVideoIndex({
+                  userId: user.id,
+                  index: currentVideoIndexMap[user.id],
+                })
+              );
+            }
+          } else {
+            dispatch(
+              setCurrentVideoIndex({ userId: user.id, index: newIndex })
+            );
+          }
         });
       }
     });
@@ -125,6 +167,7 @@ const DetailStory = ({ id }: { id: string }) => {
       const decryptedVideos = decryptedVideosMap[user.id] || [];
       const currentVideoIndex = currentVideoIndexMap[user.id] || 0;
       const watchedPosts = watchedPostsMap[user.id] || {};
+
       if (
         decryptedVideos[currentVideoIndex] &&
         !watchedPosts[decryptedVideos[currentVideoIndex].post_id]
@@ -133,10 +176,13 @@ const DetailStory = ({ id }: { id: string }) => {
         watchPost({ post_id: video.post_id })
           .unwrap()
           .then(() => {
-            setWatchedPostsMap((prev) => ({
-              ...prev,
-              [user.id]: { ...prev[user.id], [video.post_id]: true },
-            }));
+            dispatch(
+              setWatchedPost({
+                userId: user.id,
+                postId: video.post_id,
+                watched: true,
+              })
+            );
           })
           .catch(console.error);
       }
@@ -182,9 +228,20 @@ const DetailStory = ({ id }: { id: string }) => {
     // No-op
   };
 
+  useEffect(() => {
+    if (swiperRef.current) {
+      if (isInteractingWithProgressBar) {
+        swiperRef.current.disable();
+      } else {
+        swiperRef.current.enable();
+      }
+    }
+  }, [isInteractingWithProgressBar]); // This will run when the ref's current value changes
+
   return (
     <div className="myday_container" ref={videoContainerRef}>
       <Swiper
+        onSwiper={(swiper) => (swiperRef.current = swiper)}
         initialSlide={initialUserIndex >= 0 ? initialUserIndex : 0}
         onSlideChange={handleSlideChange}
         spaceBetween={0}
@@ -205,6 +262,7 @@ const DetailStory = ({ id }: { id: string }) => {
           limitProgress: 3, // Allows slides to move further
           perspective: true,
         }}
+        allowTouchMove={!isInteractingWithProgressBar} // Disable touch when interacting
       >
         {usersWithPosts?.map((user: User) => {
           const decryptedVideos = decryptedVideosMap[user.id] || [];
@@ -218,13 +276,11 @@ const DetailStory = ({ id }: { id: string }) => {
           const countdown = countdownMap[user.id] || 3;
           const indexRef = indexRefs.current[user.id];
           const abortControllerRef = abortControllerRefs.current[user.id];
-          console.log(hearts, "hearts");
-          console.log(heartsMap, "heartsMap");
 
           return (
             <SwiperSlide key={user.id}>
               {isDecrypting ? (
-                <div className="flex justify-center items-center h-full">
+                <div className="flex justify-center items-center h-[100dvh]">
                   <div style={{ textAlign: "center", padding: "20px" }}>
                     <div>
                       <LoadingBar />
@@ -241,7 +297,7 @@ const DetailStory = ({ id }: { id: string }) => {
               ) : (
                 video && (
                   <div
-                    className={`video justify-center items-center overflow-hidden`}
+                    className={`video  overflow-hidden`}
                     data-post-id={video?.post_id}
                   >
                     {video?.file_type !== "video" ? (
@@ -258,14 +314,16 @@ const DetailStory = ({ id }: { id: string }) => {
                       </a>
                     ) : (
                       <DetailContainer
-                        isInteractingWithProgressBar={undefined}
+                        setisInteractingWithProgressBar={
+                          setisInteractingWithProgressBar
+                        }
                         setIsDecrypting={(val: boolean) =>
                           setUserState(setIsDecryptingMap, user.id, val)
                         }
                         length={decryptedVideos.length}
                         currentIndex={currentVideoIndex}
-                        setCurrentIndex={(idx: number) =>
-                          setUserState(setCurrentVideoIndexMap, user.id, idx)
+                        setCurrentIndex={(idx: any) =>
+                          setCurrentIndex(user.id, idx)
                         }
                         videoData={{ current: decryptedVideos }}
                         indexRef={indexRef}
@@ -313,13 +371,13 @@ const DetailStory = ({ id }: { id: string }) => {
                     )}
 
                     {Array.isArray(hearts) &&
-                     hearts?.map((heartId: any) => (
-                      <HeartCount
-                        id={heartId}
-                        key={heartId}
-                        remove={(id: any) => removeHeart(user.id, id)}
-                      />
-                    ))}
+                      hearts?.map((heartId: any) => (
+                        <HeartCount
+                          id={heartId}
+                          key={heartId}
+                          remove={(id: any) => removeHeart(user.id, id)}
+                        />
+                      ))}
                   </div>
                 )
               )}
